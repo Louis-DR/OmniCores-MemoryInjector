@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>Verification report</h1>
+    <table>
+      <tr>
+        <th>Testcase</th>
+        <th>Result</th>
+        <th>Simulation time</th>
+        <th>Execution time</th>
+        <th>Trace file</th>
+        <th>Waveform file</th>
+        <th>Execution date</th>
+      </tr>
+    {% for testcase_name, testcase in testcases.items() | sort %}
+      <tr>
+        <td>{{testcase_name}}</td>
+        {% if testcase.pass -%}
+        <td style="color:green; font-weight:bold; text-align:center; padding-left:10px">PASS</td>
+        {% else -%}
+        <td style="color:red; font-weight:bold; text-align:center; padding-left:10px">FAIL</td>
+        {% endif -%}
+        <td style="text-align:right; padding-left:10px">{{testcase.simulation_time}}ns</td>
+        <td style="text-align:right; padding-left:10px">{{testcase.execution_time|round(2)}}s</td>
+        <td style="text-align:center; padding-left:10px"><a href="{{testcase.trace_file}}">Trace</a></td>
+        <td style="text-align:center; padding-left:10px"><a href="{{testcase.waveform_file}}">Waveform</a></td>
+        <td style="text-align:center; padding-left:10px">{{testcase.date}}</td>
+      </tr>
+    {% endfor -%}
+    </table>
+  </body>
+</html>

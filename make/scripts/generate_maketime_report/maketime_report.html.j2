@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>Make time report</h1>
+    <table>
+      <tr>
+        <th>Step</th>
+        <th>Duration</th>
+        <th>Start time</th>
+        <th>End time</th>
+      </tr>
+    {% for step_name, step in time_logs.items() %}
+      <tr>
+        <td>{{step_name}}</td>
+        <td style="text-align:right; padding-left:10px">{{step.duration}}</td>
+        <td style="text-align:right; padding-left:10px">{{step.start_string}}</td>
+        <td style="text-align:right; padding-left:10px">{{step.end_string}}</td>
+      </tr>
+    {% endfor -%}
+    </table>
+  </body>
+</html>
