@@ -13,8 +13,8 @@ path_results       = os.environ["RESULTS_DIR"]
 path_results_verif = os.path.join(path_results, "verification")
 
 # Create the verifications results directory
-if not os.path.exists(path_results):
-  os.makedirs(path_results)
+if not os.path.exists(path_results_verif):
+  os.makedirs(path_results_verif)
 
 # Iterate over testcase directories
 for testcase in os.listdir(path_testcases):
@@ -22,12 +22,12 @@ for testcase in os.listdir(path_testcases):
 
   # Copy the waveform
   path_source_waveform = os.path.join(path_testcase,"waveform.vcd")
-  path_result_waveform = os.path.join(path_results, f"{testcase}.vcd")
+  path_result_waveform = os.path.join(path_results_verif, f"{testcase}.vcd")
   shutil.copyfile(path_source_waveform, path_result_waveform)
 
   # Copy the trace log without ANSII color codes
   path_source_logfile = os.path.join(path_testcase,"trace.log")
-  path_result_logfile = os.path.join(path_results, f"{testcase}.log")
+  path_result_logfile = os.path.join(path_results_verif, f"{testcase}.log")
   ansii_codes_regex = re.compile(r"\x1b\[[0-9;]*m")
   with open(path_source_logfile, 'r') as source_logfile:
     with open(path_result_logfile, 'w') as result_logfile:
