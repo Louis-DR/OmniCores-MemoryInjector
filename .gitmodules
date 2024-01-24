@@ -1,0 +1,6 @@
+[submodule "dependencies/cocotbext-apb"]
+	path = dependencies/cocotbext-apb
+	url = https://github.com/Louis-DR/cocotbext-apb.git
+[submodule "dependencies/cocotbext-axi"]
+	path = dependencies/cocotbext-axi
+	url = https://github.com/alexforencich/cocotbext-axi.git
