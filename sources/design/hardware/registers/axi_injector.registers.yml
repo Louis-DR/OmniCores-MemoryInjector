@@ -1,0 +1,57 @@
+registers:
+
+- name: "identification"
+  offset: 0x0
+  width: 32
+  access: "read-only"
+  reset: 0xDEADBEEF
+
+- name: "stop_condition"
+  offset: 0x4
+  width: 1
+  access: "read-write"
+  reset: 0x0
+
+- name: "start_address_0"
+  offset: 0x8
+  width: 32
+  access: "read-write"
+  reset: 0x0
+- name: "start_address_1"
+  offset: 0xC
+  width: 16
+  access: "read-write"
+  reset: 0x0
+
+- name: "stop_address_0"
+  offset: 0x10
+  width: 32
+  access: "read-write"
+  reset: 0x0
+- name: "stop_address_1"
+  offset: 0x14
+  width: 16
+  access: "read-write"
+  reset: 0x0
+
+- name: "address_increment_0"
+  offset: 0x18
+  width: 32
+  access: "read-write"
+  reset: 0x0
+- name: "address_increment_1"
+  offset: 0x1C
+  width: 16
+  access: "read-write"
+  reset: 0x0
+
+- name: "number_transactions_0"
+  offset: 0x20
+  width: 32
+  access: "read-write"
+  reset: 0x0
+- name: "number_transactions_1"
+  offset: 0x24
+  width: 16
+  access: "read-write"
+  reset: 0x0

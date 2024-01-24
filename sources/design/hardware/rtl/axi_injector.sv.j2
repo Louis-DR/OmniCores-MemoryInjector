@@ -1,3 +1,4 @@
+{% from "macros.j2" import apb_register_bank %}
 
 module axi_injector (
   // ┌─────────────────────────────┐
@@ -62,14 +63,7 @@ module axi_injector (
 
 logic unused_ok;
 assign unused_ok = |{
-  control_pclk,
-  control_presetn,
-  control_psel,
-  control_penable,
   control_pprot,
-  control_paddr,
-  control_pwrite,
-  control_pwdata,
   control_pstrb,
   data_aclk,
   data_aresetn,
@@ -87,9 +81,6 @@ assign unused_ok = |{
   1'b0
 };
 
-assign control_pready  = '0;
-assign control_prdata  = '0;
-assign control_pslverr = '0;
 assign data_awid       = '0;
 assign data_awaddr     = '0;
 assign data_awlen      = '0;
@@ -112,5 +103,7 @@ assign data_arprot     = '0;
 assign data_arqos      = '0;
 assign data_arvalid    = '0;
 assign data_rready     = '0;
+
+{{apb_register_bank(registers, clock_signal="control_pclk", reset_signal="control_presetn")}}
 
 endmodule
