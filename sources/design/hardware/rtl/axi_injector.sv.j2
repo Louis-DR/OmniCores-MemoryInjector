@@ -104,6 +104,148 @@ assign data_arqos      = '0;
 assign data_arvalid    = '0;
 assign data_rready     = '0;
 
+
+
+
+
+/*
+
+  ######                                                ######
+  #     # ######  ####  #  ####  ##### ###### #####     #     #   ##   #    # #    #
+  #     # #      #    # # #        #   #      #    #    #     #  #  #  ##   # #   #
+  ######  #####  #      #  ####    #   #####  #    #    ######  #    # # #  # ####
+  #   #   #      #  ### #      #   #   #      #####     #     # ###### #  # # #  #
+  #    #  #      #    # # #    #   #   #      #   #     #     # #    # #   ## #   #
+  #     # ######  ####  #  ####    #   ###### #    #    ######  #    # #    # #    #
+
+*/
+
 {{apb_register_bank(registers, clock_signal="control_pclk", reset_signal="control_presetn")}}
+
+// Concatenate registers
+logic [47:0] start_address__csr;
+logic [47:0] stop_address__csr;
+logic [47:0] address_increment__csr;
+logic [47:0] address_mask__csr;
+logic [47:0] number_transactions__csr;
+assign start_address__csr        = { start_address_1__csr       , start_address_0__csr       };
+assign stop_address__csr         = { stop_address_1__csr        , stop_address_0__csr        };
+assign address_increment__csr    = { address_increment_1__csr   , address_increment_0__csr   };
+assign address_mask__csr         = { address_mask_1__csr        , address_mask_0__csr        };
+assign number_transactions__csr  = { number_transactions_1__csr , number_transactions_0__csr };
+
+
+
+
+
+
+/*
+
+   #####                                              #
+  #     #  ####  #    # ##### #####   ####  #         #        ####   ####  #  ####
+  #       #    # ##   #   #   #    # #    # #         #       #    # #    # # #    #
+  #       #    # # #  #   #   #    # #    # #         #       #    # #      # #
+  #       #    # #  # #   #   #####  #    # #         #       #    # #  ### # #
+  #     # #    # #   ##   #   #   #  #    # #         #       #    # #    # # #    #
+   #####   ####  #    #   #   #    #  ####  ######    #######  ####   ####  #  ####
+
+*/
+
+logic do_reset__csr;
+logic do_start__csr;
+logic do_pause__csr;
+
+assign do_reset__csr = control__csr == 2'h0;
+assign do_start__csr = control__csr == 2'h1;
+assign do_pause__csr = control__csr == 2'h2;
+
+logic injection_do_reset;
+logic injection_do_start;
+logic injection_do_pause;
+
+sync do_reset_synchronizer (
+  .clock    ( data_aclk          ),
+  .resetn   ( data_aresetn       ),
+  .data_in  ( do_reset__csr      ),
+  .data_out ( injection_do_reset )
+);
+
+sync do_start_synchronizer (
+  .clock    ( data_aclk          ),
+  .resetn   ( data_aresetn       ),
+  .data_in  ( do_start__csr      ),
+  .data_out ( injection_do_start )
+);
+
+sync do_pause_synchronizer (
+  .clock    ( data_aclk          ),
+  .resetn   ( data_aresetn       ),
+  .data_in  ( do_pause__csr      ),
+  .data_out ( injection_do_pause )
+);
+
+logic injection_enable;
+
+logic injection_back_pressure;
+logic injection_finish;
+
+always_ff @(posedge data_aclk or negedge data_aresetn) begin
+  if (!data_aresetn) begin
+    injection_enable <= 1'd0;
+  end else begin
+    if (injection_do_pause || injection_back_pressure || injection_finish) begin
+      injection_enable <= 1'b0;
+    end else if (injection_do_start) begin
+      injection_enable <= 1'b1;
+    end
+  end
+end
+
+
+
+
+
+
+/*
+
+     #                                                  #####
+    # #   #####  #####  #####  ######  ####   ####     #     # ###### #    # ###### #####    ##   ##### #  ####  #    #
+   #   #  #    # #    # #    # #      #      #         #       #      ##   # #      #    #  #  #    #   # #    # ##   #
+  #     # #    # #    # #    # #####   ####   ####     #  #### #####  # #  # #####  #    # #    #   #   # #    # # #  #
+  ####### #    # #    # #####  #           #      #    #     # #      #  # # #      #####  ######   #   # #    # #  # #
+  #     # #    # #    # #   #  #      #    # #    #    #     # #      #   ## #      #   #  #    #   #   # #    # #   ##
+  #     # #####  #####  #    # ######  ####   ####      #####  ###### #    # ###### #    # #    #   #   #  ####  #    #
+
+*/
+
+logic [48:0] injection_address; // Extra bit for overflow
+logic [47:0] injection_countdown;
+
+always_ff @(posedge data_aclk or negedge data_aresetn) begin
+  if (!data_aresetn) begin
+    // Hardware reset
+    injection_address   <= 48'd0;
+    injection_countdown <= 48'd0;
+  end else if (injection_do_reset) begin
+    // Software reset
+    injection_address   <= start_address__csr;
+    injection_countdown <= number_transactions__csr;
+  end else begin
+    if (injection_enable == 1'b1) begin
+      if (stop_condition__csr == 1'b0) begin
+        // Inject a number of transactions
+        injection_countdown <= injection_countdown - 1;
+      end else begin
+        // Inject in an address range
+        injection_address <= injection_address + address_increment__csr;
+      end
+    end
+  end
+end
+
+assign injection_finish = injection_enable ? (injection_countdown == 1'b0)
+                                           : (injection_address >= stop_address__csr);
+
+assign injection_back_pressure = 1'b0;
 
 endmodule

@@ -4,3 +4,6 @@
 [submodule "dependencies/cocotbext-axi"]
 	path = dependencies/cocotbext-axi
 	url = https://github.com/alexforencich/cocotbext-axi.git
+[submodule "dependencies/AnyV-Generics"]
+	path = dependencies/AnyV-Generics
+	url = https://github.com/Louis-DR/AnyV-Generics.git

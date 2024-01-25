@@ -55,6 +55,7 @@ J2GPP_FLAGS        = --overwrite-outdir --copy-non-template --varfile $(J2GPP_VA
 
 DESIGN_FILES  =
 DESIGN_FILES += $(shell find $(RTL_GENERATED_DIR) -name '*.v' -o  -name '*.sv')
+DESIGN_FILES += $(shell find $(DEPENDENCIES_DIR)/AnyV-Generics/design/ -name '*.v' -o  -name '*.sv')
 
 DESIGN_TOP_MODULE = axi_injector
 DESIGN_TOP_FILE   = $(RTL_GENERATED_DIR)/$(DESIGN_TOP_MODULE).sv
