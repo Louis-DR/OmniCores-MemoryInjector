@@ -1,11 +1,16 @@
 
 {% macro apb_register_bank(registers,
-                           base_address  = 0,
-                           clock_signal  = "clock",
-                           reset_signal  = "resetn",
-                           apb_prefix    = "control",
-                           apb_separator = "_",
-                           apb_lowercase = True) -%}
+                           base_address    = 0,
+                           clock_signal    = "clock",
+                           reset_signal    = "resetn",
+                           apb_prefix      = "control",
+                           apb_separator   = "_",
+                           apb_lowercase   = True,
+                           register_prefix = "",
+                           register_suffix = "",
+                           field_separator = "_",
+                           field_prefix    = "",
+                           field_suffix    = "") -%}
 
 {% filter align %}
 // APB output signals
@@ -15,7 +20,7 @@ logic §        §§ {{apb_prefix}}{{apb_separator}}pslverr__out;
 
 // Registers
 {% for register in registers -%}
-logic § [{{register.width-1}}:0] §§ {{register.name}}__csr;
+logic § [{{register.width-1}}:0] §§ {{register_prefix}}{{register.name}}{{register_suffix}};
 {% endfor -%}
 {%- endfilter %}
 // Register reset and write
@@ -23,7 +28,7 @@ always_ff @(posedge {{clock_signal}} or negedge {{reset_signal}}) begin
   if (!{{reset_signal}}) begin
     {%- filter align -%}
     {%- for register in registers %}
-    {{register.name}}__csr § <= § {{register.width}}'h{{register.reset|hexadecimal}};§§
+    {{register_prefix}}{{register.name}}{{register_suffix}} § <= § {{register.width}}'h{{register.reset|hexadecimal}};§§
     {%- endfor %}
     {%- endfilter %}
   end else if (   {{apb_prefix}}{{apb_separator}}psel
@@ -32,7 +37,7 @@ always_ff @(posedge {{clock_signal}} or negedge {{reset_signal}}) begin
     case ({{apb_prefix}}{{apb_separator}}paddr)
       {%- filter align -%}
       {%- for register in registers %}
-      32'h{{(base_address + register.offset) | hexadecimal}} § : {{register.name}}__csr § <= {{apb_prefix}}{{apb_separator}}pwdata § [{{register.width-1}}:0];§§
+      32'h{{(base_address + register.offset) | hexadecimal}} § : {{register_prefix}}{{register.name}}{{register_suffix}} § <= {{apb_prefix}}{{apb_separator}}pwdata § [{{register.width-1}}:0];§§
       {%- endfor %}
       {%- endfilter %}
     endcase
@@ -50,7 +55,7 @@ always_comb begin
       case ({{apb_prefix}}{{apb_separator}}paddr)
         {%- filter align -%}
         {%- for register in registers %}
-        32'h{{(base_address + register.offset) | hexadecimal}} § : {{apb_prefix}}{{apb_separator}}prdata__out § [{{register.width-1}}:0] §§ = {{register.name}}__csr;
+        32'h{{(base_address + register.offset) | hexadecimal}} § : {{apb_prefix}}{{apb_separator}}prdata__out § [{{register.width-1}}:0] §§ = {{register_prefix}}{{register.name}}{{register_suffix}};
         {%- endfor %}
         {%- endfilter %}
         default: begin
@@ -76,10 +81,10 @@ assign {{apb_prefix}}{{apb_separator}}pslverr = {{apb_prefix}}{{apb_separator}}p
 {%- if register.fields is defined %}
 {%- filter align -%}
 {%- for field in register.fields %}
-logic § [{{field.width-1}}:0] §§ {{register.name}}__{{field.name}}__csr;
+logic § [{{field.width-1}}:0] §§ {{field_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{field_suffix}};
 {%- endfor %}
 {%- endfilter %}
-assign { {% for field in register.fields -%} {{register.name}}__{{field.name}}__csr {{ ",\n        " if not loop.last else "" }} {% endfor -%} } = {{register.name}}__csr;
+assign { {% for field in register.fields -%} {{field_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{field_suffix}} {{ ",\n        " if not loop.last else "" }} {% endfor -%} } = {{register_prefix}}{{register.name}}{{register_suffix}};
 {% endif %}
 {%- endfor %}
 

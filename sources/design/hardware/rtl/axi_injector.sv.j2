@@ -120,7 +120,7 @@ assign data_rready     = '0;
 
 */
 
-{{apb_register_bank(registers, clock_signal="control_pclk", reset_signal="control_presetn")}}
+{{apb_register_bank(registers, clock_signal="control_pclk", reset_signal="control_presetn", register_suffix="__csr", field_separator="__", field_suffix="__csr")}}
 
 // Concatenate registers
 logic [47:0] start_address__csr;
