@@ -7,10 +7,12 @@
                            apb_separator   = "_",
                            apb_lowercase   = True,
                            register_prefix = "",
-                           register_suffix = "",
-                           field_separator = "_",
+                           register_suffix = "__csr",
+                           field_separator = "__",
                            field_prefix    = "",
-                           field_suffix    = "") -%}
+                           field_suffix    = "__csr",
+                           hw_write_prefix = "",
+                           hw_write_suffix = "__hw_write") -%}
 
 {% filter align %}
 // APB output signals
@@ -22,19 +24,34 @@ logic §        §§ {{apb_prefix}}{{apb_separator}}pslverr__out;
 {% for register in registers -%}
 logic § [{{register.width-1}}:0] §§ {{register_prefix}}{{register.name}}{{register_suffix}};
 {% endfor -%}
+
+// Hardware write signals
+{% for register in registers -%} {%- if register.hw_access in ("read-write", "write-only") %}
+logic §                          §§ {{hw_write_prefix}}{{register.name}}{{hw_write_suffix}}_enable;
+logic § [{{register.width-1}}:0] §§ {{hw_write_prefix}}{{register.name}}{{hw_write_suffix}}_data;
+{% endif -%} {% endfor -%}
 {%- endfilter %}
 // Register reset and write
 always_ff @(posedge {{clock_signal}} or negedge {{reset_signal}}) begin
   if (!{{reset_signal}}) begin
+    // Reset
     {%- filter align -%} {%- for register in registers %}
     {{register_prefix}}{{register.name}}{{register_suffix}} § <= § {{register.width}}'h{{register.reset|hexadecimal}};§§
     {%- endfor %} {%- endfilter %}
   end else if (   {{apb_prefix}}{{apb_separator}}psel
                && {{apb_prefix}}{{apb_separator}}penable
                && {{apb_prefix}}{{apb_separator}}pwrite) begin
+    // Software write
     case ({{apb_prefix}}{{apb_separator}}paddr)
-      {%- filter align -%} {%- for register in registers %} {%- if register.access in ("read-write", "write-only") %}
+      {%- filter align -%} {%- for register in registers %} {%- if register.sw_access in ("read-write", "write-only") %}
       32'h{{(base_address + register.offset) | hexadecimal}} § : {{register_prefix}}{{register.name}}{{register_suffix}} § <= {{apb_prefix}}{{apb_separator}}pwdata § [{{register.width-1}}:0];§§
+      {%- endif %} {%- endfor %} {%- endfilter %}
+    endcase
+  end else begin
+    // Hardware write
+    case ({{apb_prefix}}{{apb_separator}}paddr)
+      {%- filter align -%} {%- for register in registers %} {%- if register.hw_access in ("read-write", "write-only") %}
+      32'h{{(base_address + register.offset) | hexadecimal}} § : if ({{hw_write_prefix}}{{register.name}}{{hw_write_suffix}}_enable) § {{register_prefix}}{{register.name}}{{register_suffix}} § <= {{hw_write_prefix}}{{register.name}}{{hw_write_suffix}}_data;
       {%- endif %} {%- endfor %} {%- endfilter %}
     endcase
   end
@@ -49,7 +66,7 @@ always_comb begin
     if (~{{apb_prefix}}{{apb_separator}}pwrite) begin
       {{apb_prefix}}{{apb_separator}}prdata__out  = 32'd0;
       case ({{apb_prefix}}{{apb_separator}}paddr)
-        {%- filter align -%} {%- for register in registers %} {%- if register.access in ("read-write", "read-only") %}
+        {%- filter align -%} {%- for register in registers %} {%- if register.sw_access in ("read-write", "read-only") %}
         32'h{{(base_address + register.offset) | hexadecimal}} § : {{apb_prefix}}{{apb_separator}}prdata__out § [{{register.width-1}}:0] §§ = {{register_prefix}}{{register.name}}{{register_suffix}};
         {%- endif %} {%- endfor %} {%- endfilter %}
         default: begin

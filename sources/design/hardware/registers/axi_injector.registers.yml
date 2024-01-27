@@ -3,13 +3,15 @@ registers:
 - name: identification
   offset: 0x0
   width: 32
-  access: read-only
+  sw_access: read-only
+  hw_access: read-only
   reset: 0xDEADBEEF
 
 - name: control
   offset: 0x4
   width: 2
-  access: read-write
+  sw_access: read-write
+  hw_access: read-only
   reset: 0x0
   values:
     - name: do_reset
@@ -22,7 +24,8 @@ registers:
 - name: status
   offset: 0x8
   width: 3
-  access: read-only
+  sw_access: read-only
+  hw_access: read-write
   reset: 0x0
   fields:
     - name: injection
@@ -34,6 +37,8 @@ registers:
           value: 0x1
         - name: is_paused
           value: 0x2
+        - name: is_finished
+          value: 0x3
     - name: reception
       width: 1
       values:
@@ -45,7 +50,8 @@ registers:
 - name: injection_mode
   offset: 0xC
   width: 1
-  access: read-write
+  sw_access: read-write
+  hw_access: read-only
   reset: 0x0
   values:
     - name: number_transactions
@@ -56,62 +62,73 @@ registers:
 - name: start_address_0
   offset: 0x10
   width: 32
-  access: read-write
+  sw_access: read-write
+  hw_access: read-only
   reset: 0x0
 - name: start_address_1
   offset: 0x14
   width: 16
-  access: read-write
+  sw_access: read-write
+  hw_access: read-only
   reset: 0x0
 
 - name: stop_address_0
   offset: 0x18
   width: 32
-  access: read-write
+  sw_access: read-write
+  hw_access: read-only
   reset: 0x0
 - name: stop_address_1
   offset: 0x1C
   width: 16
-  access: read-write
+  sw_access: read-write
+  hw_access: read-only
   reset: 0x0
 
 - name: address_increment_0
   offset: 0x20
   width: 32
-  access: read-write
+  sw_access: read-write
+  hw_access: read-only
   reset: 0x0
 - name: address_increment_1
   offset: 0x24
   width: 16
-  access: read-write
+  sw_access: read-write
+  hw_access: read-only
   reset: 0x0
 
 - name: address_mask_0
   offset: 0x28
   width: 32
-  access: read-write
+  sw_access: read-write
+  hw_access: read-only
   reset: 0xFFFFFFFF
 - name: address_mask_1
   offset: 0x2C
   width: 16
-  access: read-write
+  sw_access: read-write
+  hw_access: read-only
   reset: 0xFFFF
 
 - name: number_transactions_0
   offset: 0x30
   width: 32
-  access: read-write
+  sw_access: read-write
+  hw_access: read-only
   reset: 0x0
 - name: number_transactions_1
   offset: 0x34
   width: 16
-  access: read-write
+  sw_access: read-write
+  hw_access: read-only
   reset: 0x0
 
 - name: transaction_type
   offset: 0x38
   width: 21
-  access: read-write
+  sw_access: read-write
+  hw_access: read-only
   reset: 0x0
   fields:
     - name: direction
@@ -164,7 +181,8 @@ registers:
 - name: transaction_data
   offset: 0x3C
   width: 1
-  access: read-write
+  sw_access: read-write
+  hw_access: read-only
   reset: 0x0
   values:
     - name: fixed
