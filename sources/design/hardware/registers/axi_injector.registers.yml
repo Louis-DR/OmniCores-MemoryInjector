@@ -42,7 +42,7 @@ registers:
         - name: waiting_outstanding
           value: 0x1
 
-- name: stop_condition
+- name: injection_mode
   offset: 0xC
   width: 1
   access: read-write
@@ -50,7 +50,7 @@ registers:
   values:
     - name: number_transactions
       value: 0x0
-    - name: stop_address
+    - name: address_range
       value: 0x1
 
 - name: start_address_0

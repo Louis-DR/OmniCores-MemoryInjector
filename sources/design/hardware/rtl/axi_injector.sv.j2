@@ -232,7 +232,7 @@ always_ff @(posedge data_aclk or negedge data_aresetn) begin
     injection_countdown <= number_transactions__csr;
   end else begin
     if (injection_enable == 1'b1) begin
-      if (stop_condition__csr == 1'b0) begin
+      if (injection_mode__csr == 1'b0) begin
         // Inject a number of transactions
         injection_countdown <= injection_countdown - 1;
       end else begin
@@ -243,8 +243,8 @@ always_ff @(posedge data_aclk or negedge data_aresetn) begin
   end
 end
 
-assign injection_finish = injection_enable ? (injection_countdown == 1'b0)
-                                           : (injection_address >= stop_address__csr);
+assign injection_finish = injection_mode__csr ? (injection_address >= stop_address__csr)
+                                              : (injection_countdown == 1'b0);
 
 assign injection_back_pressure = 1'b0;
 
