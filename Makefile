@@ -46,10 +46,14 @@ export RESULTS_DIR
 
 J2GPP_MAKE_DIR     = $(MAKE_DIR)/j2gpp
 J2GPP_SOURCE_FILES = $(shell find $(RTL_GENERATED_DIR))
-J2GPP_INCLUDE_DIRS = $(J2GPP_MAKE_DIR)/macros/
-J2GPP_FILTERS      = $(wildcard $(J2GPP_MAKE_DIR)/filters/*.py)
-J2GPP_VARFILES     = $(wildcard $(REGISTERS_SOURCES_DIR)/*.yml)
-J2GPP_FLAGS        = --overwrite-outdir --copy-non-template --varfile $(J2GPP_VARFILES)
+J2GPP_SOURCE_DIR   = $(SOURCES_DIR)
+J2GPP_OUTPUT_DIR   = --outdir $(GENERATED_DIR)
+J2GPP_INCLUDE_DIRS = --incdir $(J2GPP_MAKE_DIR)/macros/
+J2GPP_FILTERS      = --filters $(wildcard $(J2GPP_MAKE_DIR)/filters/*.py)
+J2GPP_VARFILES     = --varfile $(wildcard $(REGISTERS_SOURCES_DIR)/*.yml)
+J2GPP_ADAPTERS     = --file-vars-adapter $(J2GPP_MAKE_DIR)/adapters/register_bank_adapter.py register_bank_adapter
+J2GPP_FLAGS        = --overwrite-outdir --copy-non-template
+J2GPP_ARGUMENTS    = $(J2GPP_SOURCE_DIR) $(J2GPP_OUTPUT_DIR) $(J2GPP_INCLUDE_DIRS) $(J2GPP_FILTERS) $(J2GPP_VARFILES) $(J2GPP_ADAPTERS) $(J2GPP_FLAGS)
 
 
 
@@ -103,7 +107,7 @@ build: $(J2GPP_SOURCE_FILES)
 	mkdir -p $(BUILD_DIR)
 	mkdir -p $(RESULTS_DIR)
 	echo "build start" >> $(TIME_LOG) ; $(DATE_CMD) >> $(TIME_LOG)
-	j2gpp $(SOURCES_DIR) --outdir $(GENERATED_DIR) --incdir $(J2GPP_INCLUDE_DIRS) --filters $(J2GPP_FILTERS) $(J2GPP_FLAGS)
+	j2gpp $(J2GPP_ARGUMENTS)
 	echo "build end" >> $(TIME_LOG) ; $(DATE_CMD) >> $(TIME_LOG)
 
 .PHONY: verilate
