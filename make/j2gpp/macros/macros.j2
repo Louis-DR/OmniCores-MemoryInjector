@@ -26,20 +26,16 @@ logic § [{{register.width-1}}:0] §§ {{register_prefix}}{{register.name}}{{reg
 // Register reset and write
 always_ff @(posedge {{clock_signal}} or negedge {{reset_signal}}) begin
   if (!{{reset_signal}}) begin
-    {%- filter align -%}
-    {%- for register in registers %}
+    {%- filter align -%} {%- for register in registers %}
     {{register_prefix}}{{register.name}}{{register_suffix}} § <= § {{register.width}}'h{{register.reset|hexadecimal}};§§
-    {%- endfor %}
-    {%- endfilter %}
+    {%- endfor %} {%- endfilter %}
   end else if (   {{apb_prefix}}{{apb_separator}}psel
                && {{apb_prefix}}{{apb_separator}}penable
                && {{apb_prefix}}{{apb_separator}}pwrite) begin
     case ({{apb_prefix}}{{apb_separator}}paddr)
-      {%- filter align -%}
-      {%- for register in registers %}
+      {%- filter align -%} {%- for register in registers %} {%- if register.access in ("read-write", "write-only") %}
       32'h{{(base_address + register.offset) | hexadecimal}} § : {{register_prefix}}{{register.name}}{{register_suffix}} § <= {{apb_prefix}}{{apb_separator}}pwdata § [{{register.width-1}}:0];§§
-      {%- endfor %}
-      {%- endfilter %}
+      {%- endif %} {%- endfor %} {%- endfilter %}
     endcase
   end
 end
@@ -53,11 +49,9 @@ always_comb begin
     if (~{{apb_prefix}}{{apb_separator}}pwrite) begin
       {{apb_prefix}}{{apb_separator}}prdata__out  = 32'd0;
       case ({{apb_prefix}}{{apb_separator}}paddr)
-        {%- filter align -%}
-        {%- for register in registers %}
+        {%- filter align -%} {%- for register in registers %} {%- if register.access in ("read-write", "read-only") %}
         32'h{{(base_address + register.offset) | hexadecimal}} § : {{apb_prefix}}{{apb_separator}}prdata__out § [{{register.width-1}}:0] §§ = {{register_prefix}}{{register.name}}{{register_suffix}};
-        {%- endfor %}
-        {%- endfilter %}
+        {%- endif %} {%- endfor %} {%- endfilter %}
         default: begin
           {{apb_prefix}}{{apb_separator}}prdata__out  = 32'd0;
           {{apb_prefix}}{{apb_separator}}pslverr__out =  1'b1;
@@ -77,15 +71,11 @@ assign {{apb_prefix}}{{apb_separator}}pready  = {{apb_prefix}}{{apb_separator}}p
 assign {{apb_prefix}}{{apb_separator}}pslverr = {{apb_prefix}}{{apb_separator}}pslverr__out;
 
 // Register fields
-{%- for register in registers %}
-{%- if register.fields is defined %}
-{%- filter align -%}
-{%- for field in register.fields %}
+{%- for register in registers %} {%- if register.fields is defined %}
+{%- filter align -%} {%- for field in register.fields %}
 logic § [{{field.width-1}}:0] §§ {{field_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{field_suffix}};
-{%- endfor %}
-{%- endfilter %}
+{%- endfor %} {%- endfilter %}
 assign { {% for field in register.fields -%} {{field_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{field_suffix}} {{ ",\n        " if not loop.last else "" }} {% endfor -%} } = {{register_prefix}}{{register.name}}{{register_suffix}};
-{% endif %}
-{%- endfor %}
+{% endif %} {%- endfor %}
 
 {%- endmacro %}
