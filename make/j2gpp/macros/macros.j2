@@ -96,7 +96,7 @@ assign {{apb_prefix}}{{apb_separator}}pslverr = {{apb_prefix}}{{apb_separator}}p
 {%- filter align -%} {%- for field in register.fields %}
 logic § {{field.width|arrsize}} §§ {{field_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{field_suffix}};
 {%- endfor %} {%- endfilter %}
-assign { {% for field in register.fields -%} {{field_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{field_suffix}} {{ ",\n        " if not loop.last else "" }} {% endfor -%} } = {{register_prefix}}{{register.name}}{{register_suffix}};
+assign { {% for field in register.fields|reverse -%} {{field_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{field_suffix}} {{ ",\n        " if not loop.last else "" }} {% endfor -%} } = {{register_prefix}}{{register.name}}{{register_suffix}};
 {% endif %} {%- endfor %}
 // Register values
 {%- filter align -%} {%- for register in registers %}
