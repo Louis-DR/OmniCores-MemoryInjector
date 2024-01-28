@@ -13,6 +13,19 @@ async def injection_test(dut:SimHandleBase):
   cocotb.start_soon(Clock(dut.control_pclk, 10, units="ns").start())
   cocotb.start_soon(Clock(dut.data_aclk, 1, units="ns").start())
 
+  # Stub the AXI port
+  dut.data_awready.value = 1
+  dut.data_wready.value  = 1
+  dut.data_bid.value     = 0
+  dut.data_bresp.value   = 0
+  dut.data_bvalid.value  = 1
+  dut.data_arready.value = 1
+  dut.data_rid.value     = 0
+  dut.data_rdata.value   = 0
+  dut.data_rresp.value   = 0
+  dut.data_rlast.value   = 0
+  dut.data_rvalid.value  = 1
+
   dut.control_presetn.value = 0
   dut.data_aresetn.value = 0
   await ClockCycles(dut.control_pclk, 2)
@@ -30,10 +43,12 @@ async def injection_test(dut:SimHandleBase):
 
   await ClockCycles(dut.control_pclk, 5)
 
+  # Start
   await master.busy_send(apb.APBTransaction(address =  0x4, data =    0x1)) # Start
 
   await ClockCycles(dut.control_pclk, 5)
 
+  # Wait until injection is done
   pooling_iterations = 100
   while pooling_iterations != 0:
     transaction = apb.APBTransaction(address = 0x8) # Status
@@ -44,6 +59,7 @@ async def injection_test(dut:SimHandleBase):
 
   await ClockCycles(dut.control_pclk, 10)
 
+  # Reset
   await master.busy_send(apb.APBTransaction(address =  0x4, data =    0x0)) # Reset
 
   await ClockCycles(dut.control_pclk, 100)

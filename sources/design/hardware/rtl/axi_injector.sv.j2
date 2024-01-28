@@ -81,29 +81,6 @@ assign unused_ok = |{
   1'b0
 };
 
-assign data_awid       = '0;
-assign data_awaddr     = '0;
-assign data_awlen      = '0;
-assign data_awsize     = '0;
-assign data_awburst    = '0;
-assign data_awprot     = '0;
-assign data_awqos      = '0;
-assign data_awvalid    = '0;
-assign data_wdata      = '0;
-assign data_wstrb      = '0;
-assign data_wlast      = '0;
-assign data_wvalid     = '0;
-assign data_bready     = '0;
-assign data_arid       = '0;
-assign data_araddr     = '0;
-assign data_arlen      = '0;
-assign data_arsize     = '0;
-assign data_arburst    = '0;
-assign data_arprot     = '0;
-assign data_arqos      = '0;
-assign data_arvalid    = '0;
-assign data_rready     = '0;
-
 
 
 
@@ -308,6 +285,162 @@ end
 assign injection_finished = injection_mode__csr ? (injection_address >= stop_address__csr)
                                                 : (injection_countdown == 1'b0);
 
-assign injection_back_pressure = 1'b0;
+
+
+
+
+/*
+
+  ###
+   #  #    #      # ######  ####  ##### #  ####  #    #
+   #  ##   #      # #      #    #   #   # #    # ##   #
+   #  # #  #      # #####  #        #   # #    # # #  #
+   #  #  # #      # #      #        #   # #    # #  # #
+   #  #   ## #    # #      #    #   #   # #    # #   ##
+  ### #    #  ####  ######  ####    #   #  ####  #    #
+
+*/
+
+// Write request channel
+logic  [23:0] injection__data_awid;
+logic  [31:0] injection__data_awaddr;
+logic   [7:0] injection__data_awlen;
+logic   [2:0] injection__data_awsize;
+logic   [1:0] injection__data_awburst;
+logic   [2:0] injection__data_awprot;
+logic   [3:0] injection__data_awqos;
+logic         injection__data_awvalid;
+// Write data channel
+logic [255:0] injection__data_wdata;
+logic  [31:0] injection__data_wstrb;
+logic         injection__data_wlast;
+logic         injection__data_wvalid;
+// Write response channel
+logic         injection__data_bready;
+// Read request channel
+logic  [23:0] injection__data_arid;
+logic  [31:0] injection__data_araddr;
+logic   [7:0] injection__data_arlen;
+logic   [2:0] injection__data_arsize;
+logic   [1:0] injection__data_arburst;
+logic   [2:0] injection__data_arprot;
+logic   [3:0] injection__data_arqos;
+logic         injection__data_arvalid;
+// Read data response channel
+logic         injection__data_rready;
+
+logic [23:0] injection_counter;
+logic [23:0] injection_counter_next;
+
+logic [8:0] injection_write_burst_counter;
+logic [8:0] injection_write_burst_counter_next;
+
+always_comb begin
+  injection_back_pressure =   1'b0;
+  injection__data_arid    =  24'd0;
+  injection__data_araddr  =  48'd0;
+  injection__data_arlen   =   8'd0;
+  injection__data_arsize  =   3'd0;
+  injection__data_arburst =   2'd0;
+  injection__data_arprot  =   3'd0;
+  injection__data_arqos   =   4'd0;
+  injection__data_arvalid =   1'b0;
+  injection__data_awid    =  24'd0;
+  injection__data_awaddr  =  48'd0;
+  injection__data_awlen   =   8'd0;
+  injection__data_awsize  =   3'd0;
+  injection__data_awburst =   2'd0;
+  injection__data_awprot  =   3'd0;
+  injection__data_awqos   =   4'd0;
+  injection__data_awvalid =   1'b0;
+  injection__data_wdata   = 256'd0;
+  injection__data_wstrb   =  32'd0;
+  injection__data_wlast   =   1'b0;
+  injection__data_wvalid  =   1'b0;
+  injection__data_rready  =   1'b1;
+  injection__data_bready  =   1'b1;
+  injection_counter_next  = injection_counter;
+  injection_write_burst_counter_next = injection_write_burst_counter;
+  if (transaction_type__direction__csr == TRANSACTION_TYPE__DIRECTION__READ) begin
+    // Read injection
+    if (injection_enable) begin
+      injection__data_arid    = injection_counter_next;
+      injection__data_araddr  = injection_address;
+      injection__data_arlen   = transaction_type__length__csr;
+      injection__data_arsize  = transaction_type__size__csr;
+      injection__data_arburst = transaction_type__burst__csr;
+      injection__data_arprot  = transaction_type__protection__csr;
+      injection__data_arqos   = transaction_type__quality_of_service__csr;
+      injection__data_arvalid = 1'b1;
+      if (data_arready == 1'b1) injection_counter_next = injection_counter + 1;
+      else injection_back_pressure = 1'b1;
+    end else injection__data_arvalid = 1'b0;
+  end else begin
+    injection__data_arvalid = 1'b0;
+    // Write injection
+    if (injection_write_burst_counter == 0) begin
+      // Set burst counter
+      injection_write_burst_counter_next = {1'b0,transaction_type__burst__csr} + 1;
+      injection__data_awid    = injection_counter_next;
+      injection__data_awaddr  = injection_address;
+      injection__data_awlen   = transaction_type__length__csr;
+      injection__data_awsize  = transaction_type__size__csr;
+      injection__data_awburst = transaction_type__burst__csr;
+      injection__data_awprot  = transaction_type__protection__csr;
+      injection__data_awqos   = transaction_type__quality_of_service__csr;
+      injection__data_awvalid = 1'b1;
+      if (data_awready == 1'b1) injection_counter_next = injection_counter + 1;
+      else injection_back_pressure = 1'b1;
+    end
+    // Test again the burst counter to allow AW and W at the same time for the first beat
+    if (injection_write_burst_counter_next > 0) begin
+      // Only decrement the burst counter if the W beat was accepter
+      if (data_wready == 1'b1) injection_write_burst_counter_next = injection_write_burst_counter - 1;
+      injection__data_wdata  = 256'hFEDCBA9876543210FEDCBA9876543210FEDCBA9876543210FEDCBA9876543210;
+      injection__data_wstrb  = 32'hFFFFFFFF;
+      injection__data_wlast  = injection_write_burst_counter_next == 0;
+      injection__data_wvalid = 1'b1;
+    end
+  end
+end
+
+always_ff @(posedge data_aclk or negedge data_aresetn) begin
+  if (!data_aresetn) begin
+    injection_counter             <= 24'd0;
+    injection_write_burst_counter <=  9'd0;
+  end else begin
+    injection_counter             <= injection_counter_next;
+    injection_write_burst_counter <= injection_write_burst_counter_next;
+  end
+end
+
+// Write request channel
+assign data_awid    = injection__data_awid;
+assign data_awaddr  = injection__data_awaddr;
+assign data_awlen   = injection__data_awlen;
+assign data_awsize  = injection__data_awsize;
+assign data_awburst = injection__data_awburst;
+assign data_awprot  = injection__data_awprot;
+assign data_awqos   = injection__data_awqos;
+assign data_awvalid = injection__data_awvalid;
+// Write data channel
+assign data_wdata   = injection__data_wdata;
+assign data_wstrb   = injection__data_wstrb;
+assign data_wlast   = injection__data_wlast;
+assign data_wvalid  = injection__data_wvalid;
+// Write response channel
+assign data_bready  = injection__data_bready;
+// Read request channel
+assign data_arid    = injection__data_arid;
+assign data_araddr  = injection__data_araddr;
+assign data_arlen   = injection__data_arlen;
+assign data_arsize  = injection__data_arsize;
+assign data_arburst = injection__data_arburst;
+assign data_arprot  = injection__data_arprot;
+assign data_arqos   = injection__data_arqos;
+assign data_arvalid = injection__data_arvalid;
+// Read data response channel
+assign data_rready  = injection__data_rready;
+
 
 endmodule

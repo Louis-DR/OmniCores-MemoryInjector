@@ -1,20 +1,23 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Sun Jan 28 15:05:46 2024
+[*] Sun Jan 28 19:41:11 2024
 [*]
 [dumpfile] "/Users/louis/Dropbox/Projets/InjectorAXI/generated/verification/testcases/injection_test/waveform.vcd"
-[dumpfile_mtime] "Sun Jan 28 14:56:20 2024"
-[dumpfile_size] 89362
-[savefile] "/Users/louis/Dropbox/Projets/InjectorAXI/wave.gtkw"
-[timestart] 0
+[dumpfile_mtime] "Sun Jan 28 19:04:39 2024"
+[dumpfile_size] 106843
+[savefile] "/Users/louis/Dropbox/Projets/InjectorAXI/make/waves/injection_test.gtkw"
+[timestart] 330700
 [size] 1728 1051
 [pos] -1 -1
-*-17.974838 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-14.302650 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] axi_injector_tb.
-[sst_width] 385
-[signals_width] 227
+[treeopen] axi_injector_tb.axi_injector.
+[sst_width] 193
+[signals_width] 365
 [sst_expanded] 1
-[sst_vpaned_height] 325
+[sst_vpaned_height] 90
+@800200
+-CONTROL
 @28
 axi_injector_tb.control_pclk
 axi_injector_tb.control_presetn
@@ -28,18 +31,19 @@ axi_injector_tb.control_pwrite
 @22
 axi_injector_tb.control_pwdata[31:0]
 axi_injector_tb.control_prdata[31:0]
-@200
--
+@1000200
+-CONTROL
+@800200
+-STATE
 @28
 axi_injector_tb.axi_injector.data_aclk
 axi_injector_tb.axi_injector.data_aresetn
 @200
 -
-@22
-axi_injector_tb.axi_injector.injection_address[48:0]
 @28
-axi_injector_tb.axi_injector.injection_enable
-axi_injector_tb.axi_injector.injection_finished
+axi_injector_tb.axi_injector.injection_do_reset
+axi_injector_tb.axi_injector.injection_do_pause
+axi_injector_tb.axi_injector.injection_do_start
 @200
 -
 @28
@@ -52,5 +56,76 @@ axi_injector_tb.axi_injector.injection_is_finished
 @420
 axi_injector_tb.axi_injector.status_fsm_state
 axi_injector_tb.axi_injector.status_fsm_state_next
+@200
+-
+@22
+axi_injector_tb.axi_injector.injection_address[48:0]
+@28
+axi_injector_tb.axi_injector.injection_enable
+axi_injector_tb.axi_injector.injection_back_pressure
+axi_injector_tb.axi_injector.injection_finished
+@201
+-
+@22
+axi_injector_tb.axi_injector.injection_counter[23:0]
+axi_injector_tb.axi_injector.injection_counter_next[23:0]
+@200
+-
+@22
+axi_injector_tb.axi_injector.injection_write_burst_counter[8:0]
+axi_injector_tb.axi_injector.injection_write_burst_counter_next[8:0]
+@1000200
+-STATE
+@800200
+-DATA
+@28
+axi_injector_tb.data_aclk
+axi_injector_tb.data_aresetn
+@200
+-
+@22
+axi_injector_tb.data_arid[23:0]
+axi_injector_tb.data_araddr[31:0]
+axi_injector_tb.data_arlen[7:0]
+@28
+axi_injector_tb.data_arvalid
+axi_injector_tb.data_arready
+@200
+-
+@22
+axi_injector_tb.data_rid[23:0]
+axi_injector_tb.data_rdata[255:0]
+@28
+axi_injector_tb.data_rresp[1:0]
+axi_injector_tb.data_rlast
+axi_injector_tb.data_rvalid
+axi_injector_tb.data_rready
+@200
+-
+@22
+axi_injector_tb.data_awid[23:0]
+axi_injector_tb.data_awaddr[31:0]
+axi_injector_tb.data_awlen[7:0]
+@28
+axi_injector_tb.data_awvalid
+axi_injector_tb.data_awready
+@200
+-
+@22
+axi_injector_tb.data_wdata[255:0]
+@28
+axi_injector_tb.data_wlast
+axi_injector_tb.data_wvalid
+axi_injector_tb.data_wready
+@200
+-
+@22
+axi_injector_tb.data_bid[23:0]
+@28
+axi_injector_tb.data_bresp[1:0]
+axi_injector_tb.data_bvalid
+axi_injector_tb.data_bready
+@1000200
+-DATA
 [pattern_trace] 1
 [pattern_trace] 0
