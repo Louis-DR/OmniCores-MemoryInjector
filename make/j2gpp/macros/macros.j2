@@ -16,21 +16,21 @@
 
 {% filter align %}
 // APB output signals
-logic § [31:0] §§ {{apb_prefix}}{{apb_separator}}prdata__out;
-logic §        §§ {{apb_prefix}}{{apb_separator}}pready__out;
-logic §        §§ {{apb_prefix}}{{apb_separator}}pslverr__out;
+logic § {{32|arrsize}} §§ {{apb_prefix}}{{apb_separator}}prdata__out;
+logic §                §§ {{apb_prefix}}{{apb_separator}}pready__out;
+logic §                §§ {{apb_prefix}}{{apb_separator}}pslverr__out;
 
 // Registers
 {% for register in registers -%}
-logic § [{{register.width-1}}:0] §§ {{register_prefix}}{{register.name}}{{register_suffix}};
+logic § {{register.width|arrsize}} §§ {{register_prefix}}{{register.name}}{{register_suffix}};
 {% endfor %}
 // Hardware write signals
 {%- for register in registers -%} {%- if register.hw_access in ("read-write", "write-only") %}
-logic §                          §§ {{hw_write_prefix}}{{register.name}}{{hw_write_suffix}}_enable;
-logic § [{{register.width-1}}:0] §§ {{hw_write_prefix}}{{register.name}}{{hw_write_suffix}}_data;
+logic §                            §§ {{hw_write_prefix}}{{register.name}}{{hw_write_suffix}}_enable;
+logic § {{register.width|arrsize}} §§ {{hw_write_prefix}}{{register.name}}{{hw_write_suffix}}_data;
 {% if register.fields is defined %} {% for field in register.fields %}
-logic §                          §§ {{hw_write_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{hw_write_suffix}}_enable;
-logic § [{{field.width-1}}:0]    §§ {{hw_write_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{hw_write_suffix}}_data;
+logic §                            §§ {{hw_write_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{hw_write_suffix}}_enable;
+logic § {{field.width|arrsize}}    §§ {{hw_write_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{hw_write_suffix}}_data;
 {% endfor -%} {% endif -%}
 {% endif -%} {% endfor -%}
 {%- endfilter %}
@@ -94,7 +94,7 @@ assign {{apb_prefix}}{{apb_separator}}pslverr = {{apb_prefix}}{{apb_separator}}p
 // Register fields
 {%- for register in registers %} {%- if register.fields is defined %}
 {%- filter align -%} {%- for field in register.fields %}
-logic § [{{field.width-1}}:0] §§ {{field_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{field_suffix}};
+logic § {{field.width|arrsize}} §§ {{field_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{field_suffix}};
 {%- endfor %} {%- endfilter %}
 assign { {% for field in register.fields -%} {{field_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{field_suffix}} {{ ",\n        " if not loop.last else "" }} {% endfor -%} } = {{register_prefix}}{{register.name}}{{register_suffix}};
 {% endif %} {%- endfor %}
