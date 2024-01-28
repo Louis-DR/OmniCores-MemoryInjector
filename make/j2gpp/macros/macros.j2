@@ -23,10 +23,9 @@ logic §        §§ {{apb_prefix}}{{apb_separator}}pslverr__out;
 // Registers
 {% for register in registers -%}
 logic § [{{register.width-1}}:0] §§ {{register_prefix}}{{register.name}}{{register_suffix}};
-{% endfor -%}
-
+{% endfor %}
 // Hardware write signals
-{% for register in registers -%} {%- if register.hw_access in ("read-write", "write-only") %}
+{%- for register in registers -%} {%- if register.hw_access in ("read-write", "write-only") %}
 logic §                          §§ {{hw_write_prefix}}{{register.name}}{{hw_write_suffix}}_enable;
 logic § [{{register.width-1}}:0] §§ {{hw_write_prefix}}{{register.name}}{{hw_write_suffix}}_data;
 {% if register.fields is defined %} {% for field in register.fields %}
@@ -56,7 +55,7 @@ always_ff @(posedge {{clock_signal}} or negedge {{reset_signal}}) begin
     case ({{apb_prefix}}{{apb_separator}}paddr)
       {%- filter align -%} {%- for register in registers %} {%- if register.hw_access in ("read-write", "write-only") %}
       32'h{{(base_address + register.offset) | hexadecimal}} § : begin § if § ({{hw_write_prefix}}{{register.name}}{{hw_write_suffix}}_enable) § {{register_prefix}}{{register.name}}{{register_suffix}} § §§ <= {{hw_write_prefix}}{{register.name}}{{hw_write_suffix}}_data;
-                       {%- if register.fields is defined %} {{"\n"}} § § else begin {%- for field in register.fields %} if §§ ({{hw_write_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{hw_write_suffix}}_enable) § {{register_prefix}}{{register.name}}{{register_suffix}} § [{{field.offset+field.width-1}}:{{field.offset}}] §§ <= {{hw_write_prefix}}{{register.name}}{{hw_write_suffix}}_data; {{ "\n § §" if not loop.last else "end" }} {%- endfor -%} {%- endif %} end
+                       {%- if register.fields is defined %} {{"\n"}} § § else begin {%- for field in register.fields %} if §§ ({{hw_write_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{hw_write_suffix}}_enable) § {{register_prefix}}{{register.name}}{{register_suffix}} § [{{field.offset+field.width-1}}:{{field.offset}}] §§ <= {{hw_write_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{hw_write_suffix}}_data; {{ "\n § §" if not loop.last else "end" }} {%- endfor -%} {%- endif %} end
       {%- endif %} {%- endfor %} {%- endfilter %}
     endcase
   end
@@ -99,5 +98,14 @@ logic § [{{field.width-1}}:0] §§ {{field_prefix}}{{register.name}}{{field_sep
 {%- endfor %} {%- endfilter %}
 assign { {% for field in register.fields -%} {{field_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{field_suffix}} {{ ",\n        " if not loop.last else "" }} {% endfor -%} } = {{register_prefix}}{{register.name}}{{register_suffix}};
 {% endif %} {%- endfor %}
+// Register values
+{%- filter align -%} {%- for register in registers %}
+{%- if "values" in register %} {%- for value in register["values"] %}
+parameter § {{register.width|arrsize}} §§ {{register.name|upper}}__{{value.name|upper}} § = {{register.width}}'h{{value.value|hexadecimal}}; §§
+{%- endfor %} {%- endif %}
+{%- if register.fields is defined %} {%- for field in register.fields %} {%- if "values" in field %} {%- for value in field["values"] %}
+parameter § {{field.width|arrsize}} §§ {{register.name|upper}}__{{field.name|upper}}__{{value.name|upper}} § = {{field.width}}'h{{value.value|hexadecimal}}; §§
+{%- endfor %} {%- endif %} {%- endfor %} {% endif %}
+{%- endfor %} {%- endfilter %}
 
 {%- endmacro %}

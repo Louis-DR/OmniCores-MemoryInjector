@@ -120,7 +120,7 @@ assign data_rready     = '0;
 
 */
 
-{{apb_register_bank(registers, clock_signal="control_pclk", reset_signal="control_presetn", register_suffix="__csr", field_separator="__", field_suffix="__csr")}}
+{{apb_register_bank(registers, clock_signal="control_pclk", reset_signal="control_presetn")}}
 
 // Concatenate registers
 logic [47:0] start_address__csr;
@@ -184,16 +184,78 @@ sync do_pause_synchronizer (
   .data_out ( injection_do_pause )
 );
 
+logic injection_is_reset;
+logic injection_is_paused;
+logic injection_is_active;
+logic injection_is_finished;
+
+sync is_reset_synchronizer (
+  .clock    ( control_pclk       ),
+  .resetn   ( control_presetn    ),
+  .data_in  ( injection_do_reset ),
+  .data_out ( injection_is_reset )
+);
+
+sync is_paused_synchronizer (
+  .clock    ( control_pclk        ),
+  .resetn   ( control_presetn     ),
+  .data_in  ( injection_do_pause  ),
+  .data_out ( injection_is_paused )
+);
+
+sync is_active_synchronizer (
+  .clock    ( control_pclk        ),
+  .resetn   ( control_presetn     ),
+  .data_in  ( injection_enable    ),
+  .data_out ( injection_is_active )
+);
+
+sync is_finished_synchronizer (
+  .clock    ( control_pclk          ),
+  .resetn   ( control_presetn       ),
+  .data_in  ( injection_finished    ),
+  .data_out ( injection_is_finished )
+);
+
+enum {
+  RESET    = STATUS__INJECTION__IS_RESET,
+  PAUSED   = STATUS__INJECTION__IS_PAUSED,
+  ACTIVE   = STATUS__INJECTION__IS_ACTIVE,
+  FINISHED = STATUS__INJECTION__IS_FINISHED
+} status_fsm_state, status_fsm_state_next;
+
+always_comb begin
+  status_fsm_state_next = status_fsm_state;
+  case (status_fsm_state)
+    RESET    : if      (injection_is_active)   status_fsm_state_next = ACTIVE;
+    PAUSED   : if      (injection_is_reset)    status_fsm_state_next = RESET;
+               else if (injection_is_active)   status_fsm_state_next = ACTIVE;
+    ACTIVE   : if      (injection_is_reset)    status_fsm_state_next = RESET;
+               else if (injection_is_paused)   status_fsm_state_next = PAUSED;
+               else if (injection_is_finished) status_fsm_state_next = FINISHED;
+    FINISHED : if      (injection_is_reset)    status_fsm_state_next = RESET;
+  endcase
+end
+
+always_ff @(posedge control_pclk or negedge control_presetn) begin
+  if (!control_presetn) status_fsm_state <= RESET;
+  else                  status_fsm_state <= status_fsm_state_next;
+end
+
+assign status__hw_write_enable            = 1'b0;
+assign status__injection__hw_write_enable = (status_fsm_state_next != status_fsm_state);
+assign status__injection__hw_write_data   = status_fsm_state_next;
+
 logic injection_enable;
 
 logic injection_back_pressure;
-logic injection_finish;
+logic injection_finished;
 
 always_ff @(posedge data_aclk or negedge data_aresetn) begin
   if (!data_aresetn) begin
     injection_enable <= 1'd0;
   end else begin
-    if (injection_do_pause || injection_back_pressure || injection_finish) begin
+    if (injection_do_pause || injection_back_pressure || injection_finished) begin
       injection_enable <= 1'b0;
     end else if (injection_do_start) begin
       injection_enable <= 1'b1;
@@ -243,8 +305,8 @@ always_ff @(posedge data_aclk or negedge data_aresetn) begin
   end
 end
 
-assign injection_finish = injection_mode__csr ? (injection_address >= stop_address__csr)
-                                              : (injection_countdown == 1'b0);
+assign injection_finished = injection_mode__csr ? (injection_address >= stop_address__csr)
+                                                : (injection_countdown == 1'b0);
 
 assign injection_back_pressure = 1'b0;
 

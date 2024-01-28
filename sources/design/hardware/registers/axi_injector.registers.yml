@@ -33,9 +33,9 @@ registers:
       values:
         - name: is_reset
           value: 0x0
-        - name: is_active
-          value: 0x1
         - name: is_paused
+          value: 0x1
+        - name: is_active
           value: 0x2
         - name: is_finished
           value: 0x3
