@@ -1,0 +1,56 @@
+[*]
+[*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
+[*] Sun Jan 28 15:05:46 2024
+[*]
+[dumpfile] "/Users/louis/Dropbox/Projets/InjectorAXI/generated/verification/testcases/injection_test/waveform.vcd"
+[dumpfile_mtime] "Sun Jan 28 14:56:20 2024"
+[dumpfile_size] 89362
+[savefile] "/Users/louis/Dropbox/Projets/InjectorAXI/wave.gtkw"
+[timestart] 0
+[size] 1728 1051
+[pos] -1 -1
+*-17.974838 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+[treeopen] axi_injector_tb.
+[sst_width] 385
+[signals_width] 227
+[sst_expanded] 1
+[sst_vpaned_height] 325
+@28
+axi_injector_tb.control_pclk
+axi_injector_tb.control_presetn
+axi_injector_tb.control_psel
+axi_injector_tb.control_penable
+axi_injector_tb.control_pready
+@22
+axi_injector_tb.control_paddr[31:0]
+@28
+axi_injector_tb.control_pwrite
+@22
+axi_injector_tb.control_pwdata[31:0]
+axi_injector_tb.control_prdata[31:0]
+@200
+-
+@28
+axi_injector_tb.axi_injector.data_aclk
+axi_injector_tb.axi_injector.data_aresetn
+@200
+-
+@22
+axi_injector_tb.axi_injector.injection_address[48:0]
+@28
+axi_injector_tb.axi_injector.injection_enable
+axi_injector_tb.axi_injector.injection_finished
+@200
+-
+@28
+axi_injector_tb.axi_injector.injection_is_reset
+axi_injector_tb.axi_injector.injection_is_paused
+axi_injector_tb.axi_injector.injection_is_active
+axi_injector_tb.axi_injector.injection_is_finished
+@200
+-
+@420
+axi_injector_tb.axi_injector.status_fsm_state
+axi_injector_tb.axi_injector.status_fsm_state_next
+[pattern_trace] 1
+[pattern_trace] 0

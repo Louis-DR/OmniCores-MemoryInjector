@@ -93,6 +93,16 @@ export VERIFICATION_DESIGN_FILES
 
 
 
+TESTCASE ?= base_test
+
+
+
+WAVES_DIR = $(MAKE_DIR)/waves
+WAVE_TOOL = gtkwave
+WAVE_ARGS =
+
+
+
 PYTHON      = python3.11
 
 DATE_CMD = date -u +"%Y/%m/%d-%T"
@@ -136,6 +146,10 @@ verify:
 .PHONY: report
 report:
 	$(PYTHON) $(SCRIPTS_DIR)/generate_maketime_report/generate_maketime_report.py
+
+.PHONY: waves
+waves:
+	$(WAVE_TOOL) $(WAVES_DIR)/$(TESTCASE).gtkw $(WAVES_ARGS)
 
 .PHONY: clean
 clean:
