@@ -371,16 +371,14 @@ always_comb begin
       injection__data_arburst = transaction_type__burst__csr;
       injection__data_arprot  = transaction_type__protection__csr;
       injection__data_arqos   = transaction_type__quality_of_service__csr;
-      injection__data_arvalid = 1'b1;
       if (data_arready == 1'b1) injection_counter_next = injection_counter + 1;
       else injection_back_pressure = 1'b1;
     end else injection__data_arvalid = 1'b0;
   end else begin
-    injection__data_arvalid = 1'b0;
     // Write injection
-    if (injection_write_burst_counter == 0) begin
+    if (injection_enable & injection_write_burst_counter == 0) begin
       // Set burst counter
-      injection_write_burst_counter_next = {1'b0,transaction_type__burst__csr} + 1;
+      injection_write_burst_counter_next = {1'b0,transaction_type__length__csr} + 1;
       injection__data_awid    = injection_counter_next;
       injection__data_awaddr  = injection_address;
       injection__data_awlen   = transaction_type__length__csr;
@@ -395,7 +393,7 @@ always_comb begin
     // Test again the burst counter to allow AW and W at the same time for the first beat
     if (injection_write_burst_counter_next > 0) begin
       // Only decrement the burst counter if the W beat was accepter
-      if (data_wready == 1'b1) injection_write_burst_counter_next = injection_write_burst_counter - 1;
+      if (data_wready == 1'b1) injection_write_burst_counter_next = injection_write_burst_counter_next - 1;
       injection__data_wdata  = 256'hFEDCBA9876543210FEDCBA9876543210FEDCBA9876543210FEDCBA9876543210;
       injection__data_wstrb  = 32'hFFFFFFFF;
       injection__data_wlast  = injection_write_burst_counter_next == 0;

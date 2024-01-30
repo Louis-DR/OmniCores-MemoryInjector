@@ -1,19 +1,19 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Sun Jan 28 19:41:11 2024
+[*] Mon Jan 29 23:27:13 2024
 [*]
 [dumpfile] "/Users/louis/Dropbox/Projets/InjectorAXI/generated/verification/testcases/injection_test/waveform.vcd"
-[dumpfile_mtime] "Sun Jan 28 19:04:39 2024"
-[dumpfile_size] 106843
+[dumpfile_mtime] "Sun Jan 28 22:26:48 2024"
+[dumpfile_size] 1212624
 [savefile] "/Users/louis/Dropbox/Projets/InjectorAXI/make/waves/injection_test.gtkw"
-[timestart] 330700
+[timestart] 934390
 [size] 1728 1051
 [pos] -1 -1
-*-14.302650 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-12.446144 940000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] axi_injector_tb.
 [treeopen] axi_injector_tb.axi_injector.
 [sst_width] 193
-[signals_width] 365
+[signals_width] 512
 [sst_expanded] 1
 [sst_vpaned_height] 90
 @800200
@@ -41,6 +41,7 @@ axi_injector_tb.axi_injector.data_aresetn
 @200
 -
 @28
+axi_injector_tb.axi_injector.control__csr[1:0]
 axi_injector_tb.axi_injector.injection_do_reset
 axi_injector_tb.axi_injector.injection_do_pause
 axi_injector_tb.axi_injector.injection_do_start
@@ -59,21 +60,45 @@ axi_injector_tb.axi_injector.status_fsm_state_next
 @200
 -
 @22
+axi_injector_tb.axi_injector.status__csr[2:0]
+axi_injector_tb.axi_injector.status__injection__csr[1:0]
+axi_injector_tb.axi_injector.status__injection__hw_write_data[1:0]
+@28
+axi_injector_tb.axi_injector.status__injection__hw_write_enable
+@200
+-
+@22
 axi_injector_tb.axi_injector.injection_address[48:0]
 @28
 axi_injector_tb.axi_injector.injection_enable
 axi_injector_tb.axi_injector.injection_back_pressure
 axi_injector_tb.axi_injector.injection_finished
-@201
+@200
 -
 @22
 axi_injector_tb.axi_injector.injection_counter[23:0]
 axi_injector_tb.axi_injector.injection_counter_next[23:0]
 @200
 -
-@22
+@24
 axi_injector_tb.axi_injector.injection_write_burst_counter[8:0]
 axi_injector_tb.axi_injector.injection_write_burst_counter_next[8:0]
+@200
+-
+@22
+axi_injector_tb.axi_injector.transaction_type__csr[20:0]
+@28
+axi_injector_tb.axi_injector.transaction_type__direction__csr
+@22
+axi_injector_tb.axi_injector.transaction_type__length__csr[7:0]
+@28
+axi_injector_tb.axi_injector.transaction_type__size__csr[2:0]
+@29
+axi_injector_tb.axi_injector.transaction_type__burst__csr[1:0]
+@28
+axi_injector_tb.axi_injector.transaction_type__protection__csr[2:0]
+@22
+axi_injector_tb.axi_injector.transaction_type__quality_of_service__csr[3:0]
 @1000200
 -STATE
 @800200

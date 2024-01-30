@@ -35,11 +35,13 @@ async def injection_test(dut:SimHandleBase):
 
   await ClockCycles(dut.control_pclk, 20)
 
+
   # Configure
   await master.busy_send(apb.APBTransaction(address =  0xC, data =    0x1)) # Injection mode
   await master.busy_send(apb.APBTransaction(address = 0x10, data = 0x1000)) # Start address
   await master.busy_send(apb.APBTransaction(address = 0x18, data = 0x2000)) # Stop address
   await master.busy_send(apb.APBTransaction(address = 0x20, data =   0x20)) # Address increment
+  await master.busy_send(apb.APBTransaction(address = 0x38, data =    0x0)) # Read transaction
 
   await ClockCycles(dut.control_pclk, 5)
 
@@ -57,9 +59,38 @@ async def injection_test(dut:SimHandleBase):
       break
     pooling_iterations -= 1
 
-  await ClockCycles(dut.control_pclk, 10)
+  # Reset
+  await master.busy_send(apb.APBTransaction(address =  0x4, data =    0x0)) # Reset
+
+
+  await ClockCycles(dut.control_pclk, 25)
+
+
+  # Configure
+  await master.busy_send(apb.APBTransaction(address =  0xC, data =    0x1)) # Injection mode
+  await master.busy_send(apb.APBTransaction(address = 0x10, data = 0x1000)) # Start address
+  await master.busy_send(apb.APBTransaction(address = 0x18, data = 0x2000)) # Stop address
+  await master.busy_send(apb.APBTransaction(address = 0x20, data =   0x40)) # Address increment
+  await master.busy_send(apb.APBTransaction(address = 0x38, data =    0x7)) # Write transaction 4x burst
+
+  await ClockCycles(dut.control_pclk, 5)
+
+  # Start
+  await master.busy_send(apb.APBTransaction(address =  0x4, data =    0x1)) # Start
+
+  await ClockCycles(dut.control_pclk, 5)
+
+  # Wait until injection is done
+  pooling_iterations = 100
+  while pooling_iterations != 0:
+    transaction = apb.APBTransaction(address = 0x8) # Status
+    await master.busy_send(transaction)
+    if ((transaction.data & 0b11) == 0b11):
+      break
+    pooling_iterations -= 1
 
   # Reset
   await master.busy_send(apb.APBTransaction(address =  0x4, data =    0x0)) # Reset
+
 
   await ClockCycles(dut.control_pclk, 100)
