@@ -74,11 +74,9 @@ VERILATOR_FLAGS        = --binary -O3 -j 0 -Wall -Wno-UNSIGNED --Mdir $(VERILATO
 
 
 TESTCASES_DIR    = $(VERIFICATION_GENERATED_DIR)/testcases/
-BASETEST_DIR     = $(TESTCASES_DIR)/base_test/
-TESTCASES_DIRS   = $(filter-out $(BASETEST_DIR),$(wildcard $(TESTCASES_DIR)/*/))
+BASETEST         = base_test
+TESTCASES        = $(filter-out $(BASETEST),$(shell basename $(wildcard $(TESTCASES_DIR)/*/)))
 export TESTCASES_DIR
-export TESTCASES_DIR
-export BASETEST_DIR
 
 TESTBENCH_TOP_MODULE = axi_injector_tb
 TESTBENCH_TOP_FILE   = $(VERIFICATION_GENERATED_DIR)/testbench/$(TESTBENCH_TOP_MODULE).sv
@@ -93,7 +91,7 @@ export VERIFICATION_DESIGN_FILES
 
 
 
-TESTCASE ?= base_test
+# TESTCASE ?= base_test
 
 
 
@@ -114,6 +112,14 @@ test:
 
 .PHONY: build
 build: $(J2GPP_SOURCE_FILES)
+	@echo "  ███████████              ███  ████      █████ "
+	@echo " ░░███░░░░░███            ░░░  ░░███     ░░███  "
+	@echo "  ░███    ░███ █████ ████ ████  ░███   ███████  "
+	@echo "  ░██████████ ░░███ ░███ ░░███  ░███  ███░░███  "
+	@echo "  ░███░░░░░███ ░███ ░███  ░███  ░███ ░███ ░███  "
+	@echo "  ░███    ░███ ░███ ░███  ░███  ░███ ░███ ░███  "
+	@echo "  ███████████  ░░████████ █████ █████░░████████ "
+	@echo " ░░░░░░░░░░░    ░░░░░░░░ ░░░░░ ░░░░░  ░░░░░░░░  "
 	mkdir -p $(BUILD_DIR)
 	mkdir -p $(RESULTS_DIR)
 	echo "build start" >> $(TIME_LOG) ; $(DATE_CMD) >> $(TIME_LOG)
@@ -128,20 +134,48 @@ verilate: $(DESIGN_FILES)
 
 .PHONY: compile
 compile:
+	@echo "    █████████                                      ███  ████           "
+	@echo "   ███░░░░░███                                    ░░░  ░░███           "
+	@echo "  ███     ░░░   ██████  █████████████   ████████  ████  ░███   ██████  "
+	@echo " ░███          ███░░███░░███░░███░░███ ░░███░░███░░███  ░███  ███░░███ "
+	@echo " ░███         ░███ ░███ ░███ ░███ ░███  ░███ ░███ ░███  ░███ ░███████  "
+	@echo " ░░███     ███░███ ░███ ░███ ░███ ░███  ░███ ░███ ░███  ░███ ░███░░░   "
+	@echo "  ░░█████████ ░░██████  █████░███ █████ ░███████  █████ █████░░██████  "
+	@echo "   ░░░░░░░░░   ░░░░░░  ░░░░░ ░░░ ░░░░░  ░███░░░  ░░░░░ ░░░░░  ░░░░░░   "
+	@echo "                                        ░███                           "
+	@echo "                                        █████                          "
+	@echo "                                       ░░░░░                           "
 	echo "compile start" >> $(TIME_LOG) ; $(DATE_CMD) >> $(TIME_LOG)
-	make -C $(BASETEST_DIR)/
-	for TESTCASE_DIR in $(TESTCASES_DIRS); do \
-		cp -R $(BASETEST_DIR)/sim_build/ $$TESTCASE_DIR/sim_build/ ; \
+	make -C $(TESTCASES_DIR)/$(BASETEST)/
+	for TESTCASE in $(TESTCASES); do \
+		cp -R $(TESTCASES_DIR)/$(BASETEST)/sim_build/ $(TESTCASES_DIR)/$$TESTCASE/sim_build/ ; \
 	done
 	echo "compile end" >> $(TIME_LOG) ; $(DATE_CMD) >> $(TIME_LOG)
 
 .PHONY: verify
 verify:
-	for TESTCASE_DIR in $(TESTCASES_DIRS); do \
-		echo "$$TESTCASE_DIR start" >> $(TIME_LOG) ; $(DATE_CMD) >> $(TIME_LOG) ; \
-		make -C $$TESTCASE_DIR ; \
-		echo "$$TESTCASE_DIR end" >> $(TIME_LOG) ; $(DATE_CMD) >> $(TIME_LOG) ; \
+	@echo "  █████   █████                     ███     ██████             "
+	@echo " ░░███   ░░███                     ░░░     ███░░███            "
+	@echo "  ░███    ░███   ██████  ████████  ████   ░███ ░░░  █████ ████ "
+	@echo "  ░███    ░███  ███░░███░░███░░███░░███  ███████   ░░███ ░███  "
+	@echo "  ░░███   ███  ░███████  ░███ ░░░  ░███ ░░░███░     ░███ ░███  "
+	@echo "   ░░░█████░   ░███░░░   ░███      ░███   ░███      ░███ ░███  "
+	@echo "     ░░███     ░░██████  █████     █████  █████     ░░███████  "
+	@echo "      ░░░       ░░░░░░  ░░░░░     ░░░░░  ░░░░░       ░░░░░███  "
+	@echo "                                                     ███ ░███  "
+	@echo "                                                    ░░██████   "
+	@echo "                                                     ░░░░░░    "
+ifndef TESTCASE
+	for TESTCASE in $(TESTCASES); do \
+		echo "$$TESTCASE start" >> $(TIME_LOG) ; $(DATE_CMD) >> $(TIME_LOG) ; \
+		make -C $(TESTCASES_DIR)/$$TESTCASE ; \
+		echo "$$TESTCASE end" >> $(TIME_LOG) ; $(DATE_CMD) >> $(TIME_LOG) ; \
 	done
+else
+	echo "$(TESTCASE) start" >> $(TIME_LOG) ; $(DATE_CMD) >> $(TIME_LOG) ;
+	make -C $(TESTCASES_DIR)/$(TESTCASE) ;
+	echo "$(TESTCASE) end" >> $(TIME_LOG) ; $(DATE_CMD) >> $(TIME_LOG) ;
+endif
 
 .PHONY: report
 report:
@@ -149,7 +183,11 @@ report:
 
 .PHONY: waves
 waves:
+ifdef TESTCASE
 	$(WAVE_TOOL) $(WAVES_DIR)/$(TESTCASE).gtkw $(WAVES_ARGS)
+else
+	@echo "ERROR: Please specify the testcase with the variable TESTCASE."
+endif
 
 .PHONY: clean
 clean:
