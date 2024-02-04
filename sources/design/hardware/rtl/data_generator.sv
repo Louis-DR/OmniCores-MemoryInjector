@@ -7,6 +7,7 @@ module data_generator #(
 ) (
   input                clock,
   input                resetn,
+  input                initialize,
   input                enable,
   input                mode_selector,
   input    [WIDTH-1:0] initial_value,
@@ -37,8 +38,10 @@ always_comb begin
   end
 end
 
-always_ff @(posedge clock or negedge resets) begin
+always_ff @(posedge clock or negedge resetn) begin
   if (!resetn) begin
+    data <= 256'd0;
+  end else if (initialize) begin
     data <= initial_value;
   end else begin
     data <= data_next;

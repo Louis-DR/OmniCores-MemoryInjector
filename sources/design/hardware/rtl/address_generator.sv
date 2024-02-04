@@ -1,13 +1,13 @@
 
 module address_generator #(
-  parameter WIDTH = 32
+  parameter WIDTH = 48
 ) (
   input              clock,
   input              resetn,
+  input              initialize,
   input              enable,
   input              mode_selector,
   input  [WIDTH-1:0] range_start,
-  input  [WIDTH-1:0] range_stop,
   input  [WIDTH-1:0] range_increment,
   input  [WIDTH-1:0] lfsr_seed,
   input  [WIDTH-1:0] lfsr_fibonacci_taps,
@@ -32,8 +32,10 @@ always_comb begin
   end
 end
 
-always_ff @(posedge clock or negedge resets) begin
+always_ff @(posedge clock or negedge resetn) begin
   if (!resetn) begin
+    address <= 48'd0;
+  end else if (initialize) begin
     if (mode_selector) begin
       address <= range_start;
     end else begin

@@ -3,7 +3,7 @@ module axi_injector_tb (
   // ┌─────────────────────────────┐
   // │ Control input APB interface │
   // └─────────────────────────────┘
-  input          control_pclk,
+  input          control_pclock,
   input          control_presetn,
   input          control_psel,
   input          control_penable,
@@ -18,7 +18,7 @@ module axi_injector_tb (
   // ┌───────────────────────────┐
   // │ Data output AXI interface │
   // └───────────────────────────┘
-  input          data_aclk,
+  input          data_aclock,
   input          data_aresetn,
   // Write request channel
   output  [23:0] data_awid,
@@ -61,7 +61,7 @@ module axi_injector_tb (
 );
 
 axi_injector axi_injector (
-  .control_pclk    ( control_pclk    ),
+  .control_pclock  ( control_pclock  ),
   .control_presetn ( control_presetn ),
   .control_psel    ( control_psel    ),
   .control_penable ( control_penable ),
@@ -73,7 +73,7 @@ axi_injector axi_injector (
   .control_pstrb   ( control_pstrb   ),
   .control_prdata  ( control_prdata  ),
   .control_pslverr ( control_pslverr ),
-  .data_aclk       ( data_aclk       ),
+  .data_aclock     ( data_aclock     ),
   .data_aresetn    ( data_aresetn    ),
   .data_awid       ( data_awid       ),
   .data_awaddr     ( data_awaddr     ),

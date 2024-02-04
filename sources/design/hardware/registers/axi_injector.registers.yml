@@ -6,6 +6,70 @@ registers:
   hw_access: read-only
   reset: 0xDEADBEEF
 
+- name: capabilities_0
+  width: 24
+  sw_access: read-only
+  hw_access: read-only
+  reset: 0x0
+  fields:
+    - name: address_width
+      width: 8
+    - name: data_width
+      width: 16
+
+- name: capabilities_1
+  width: 14
+  sw_access: read-only
+  hw_access: read-only
+  reset: 0x0
+  fields:
+    - name: supports_address_range
+      width: 1
+    - name: address_range_increment_width
+      width: 8
+    - name: supports_address_random_lfsr
+      width: 1
+    - name: supports_address_random_lfsr_programmable_fibonacci
+      width: 1
+    - name: supports_address_random_lfsr_programmable_gallois
+      width: 1
+    - name: supports_address_random_lfsr_mask
+      width: 1
+    - name: supports_address_final_masking
+      width: 1
+
+- name: capabilities_2
+  width: 21
+  sw_access: read-only
+  hw_access: read-only
+  reset: 0x0
+  fields:
+    - name: supports_data_initialization
+      width: 1
+    - name: supports_data_fixed
+      width: 1
+    - name: supports_data_shift
+      width: 1
+    - name: supports_data_shift_left
+      width: 1
+    - name: supports_data_shift_right
+      width: 1
+    - name: data_shift_distance
+      width: 16
+
+- name: capabilities_3
+  width: 17
+  sw_access: read-only
+  hw_access: read-only
+  reset: 0x0
+  fields:
+    - name: supports_data_random_lfsr
+      width: 1
+    - name: supports_data_random_lfsr_width
+      width: 16
+
+
+
 - name: control
   width: 2
   sw_access: read-write
@@ -28,11 +92,11 @@ registers:
     - name: injection
       width: 2
       values:
-        - name: is_reset
+        - name: is_idle
           value: 0x0
-        - name: is_paused
-          value: 0x1
         - name: is_active
+          value: 0x1
+        - name: is_paused
           value: 0x2
         - name: is_finished
           value: 0x3
@@ -44,60 +108,131 @@ registers:
         - name: waiting_outstanding
           value: 0x1
 
+
+
 - name: injection_mode
-  width: 1
+  width: 3
   sw_access: read-write
   hw_access: read-only
   reset: 0x0
-  values:
-    - name: number_transactions
-      value: 0x0
-    - name: address_range
-      value: 0x1
+  fields:
+    - name: address_generation_mode
+      width: 1
+      values:
+        - name: range
+          value: 0x0
+        - name: random
+          value: 0x1
+    - name: data_generation_mode
+      width: 1
+      values:
+        - name: shift
+          value: 0x0
+        - name: random
+          value: 0x1
+    - name: stop_condition
+      width: 1
+      values:
+        - name: address_range
+          value: 0x0
+        - name: number_transactions
+          value: 0x1
 
-- name: start_address_0
+
+
+- name: address_range_start_0
   width: 32
   sw_access: read-write
   hw_access: read-only
   reset: 0x0
-- name: start_address_1
+- name: address_range_start_1
   width: 16
   sw_access: read-write
   hw_access: read-only
   reset: 0x0
 
-- name: stop_address_0
+- name: address_range_stop_0
   width: 32
   sw_access: read-write
   hw_access: read-only
   reset: 0x0
-- name: stop_address_1
+- name: address_range_stop_1
   width: 16
   sw_access: read-write
   hw_access: read-only
   reset: 0x0
 
-- name: address_increment_0
+- name: address_range_increment_0
   width: 32
   sw_access: read-write
   hw_access: read-only
   reset: 0x0
-- name: address_increment_1
+- name: address_range_increment_1
   width: 16
   sw_access: read-write
   hw_access: read-only
   reset: 0x0
 
-- name: address_mask_0
+
+
+- name: address_random_lfsr_seed_0
+  width: 32
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0x0
+- name: address_random_lfsr_seed_1
+  width: 16
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0x0
+
+- name: address_random_lfsr_fibonacci_taps_0
+  width: 32
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0x0
+- name: address_random_lfsr_fibonacci_taps_1
+  width: 16
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0x0
+
+- name: address_random_lfsr_gallois_taps_0
+  width: 32
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0x0
+- name: address_random_lfsr_gallois_taps_1
+  width: 15
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0x0
+
+- name: address_random_lfsr_mask_0
+  width: 32
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0x0
+- name: address_random_lfsr_mask_1
+  width: 16
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0x0
+
+
+
+- name: address_final_mask_0
   width: 32
   sw_access: read-write
   hw_access: read-only
   reset: 0xFFFFFFFF
-- name: address_mask_1
+- name: address_final_mask_1
   width: 16
   sw_access: read-write
   hw_access: read-only
   reset: 0xFFFF
+
+
 
 - name: number_transactions_0
   width: 32
@@ -110,7 +245,83 @@ registers:
   hw_access: read-only
   reset: 0x0
 
-- name: transaction_type
+
+
+- name: data_initial_value_0
+  width: 32
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0x0
+- name: data_initial_value_1
+  width: 32
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0x0
+- name: data_initial_value_2
+  width: 32
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0x0
+- name: data_initial_value_3
+  width: 32
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0x0
+- name: data_initial_value_4
+  width: 32
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0x0
+- name: data_initial_value_5
+  width: 32
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0x0
+- name: data_initial_value_6
+  width: 32
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0x0
+- name: data_initial_value_7
+  width: 32
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0x0
+
+
+
+- name: data_shift_mode
+  width: 2
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0x0
+  fields:
+    - name: enable
+      width: 1
+      values:
+        - name: shift_disable
+          value: 0
+        - name: shift_enable
+          value: 1
+    - name: direction
+      width: 1
+      values:
+        - name: shift_left
+          value: 0
+        - name: shift_right
+          value: 1
+
+
+
+- name: data_final_mask
+  width: 32
+  sw_access: read-write
+  hw_access: read-only
+  reset: 0xFFFFFFFF
+
+
+
+- name: transaction_attributes
   width: 21
   sw_access: read-write
   hw_access: read-only
@@ -162,14 +373,3 @@ registers:
               value: 0x1
     - name: quality_of_service
       width: 4
-
-- name: transaction_data
-  width: 1
-  sw_access: read-write
-  hw_access: read-only
-  reset: 0x0
-  values:
-    - name: fixed
-      value: 0x0
-    - name: random
-      value: 0x1

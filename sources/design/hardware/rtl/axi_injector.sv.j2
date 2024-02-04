@@ -4,7 +4,7 @@ module axi_injector (
   // ┌─────────────────────────────┐
   // │ Control input APB interface │
   // └─────────────────────────────┘
-  input          control_pclk,
+  input          control_pclock,
   input          control_presetn,
   input          control_psel,
   input          control_penable,
@@ -19,7 +19,7 @@ module axi_injector (
   // ┌───────────────────────────┐
   // │ Data output AXI interface │
   // └───────────────────────────┘
-  input          data_aclk,
+  input          data_aclock,
   input          data_aresetn,
   // Write request channel
   output  [23:0] data_awid,
@@ -65,7 +65,7 @@ logic unused_ok;
 assign unused_ok = |{
   control_pprot,
   control_pstrb,
-  data_aclk,
+  data_aclock,
   data_aresetn,
   data_awready,
   data_wready,
@@ -85,6 +85,7 @@ assign unused_ok = |{
 
 
 
+
 /*
 
   ######                                                ######
@@ -97,19 +98,37 @@ assign unused_ok = |{
 
 */
 
-{{apb_register_bank(registers, clock_signal="control_pclk", reset_signal="control_presetn")}}
+{{apb_register_bank(registers, clock_signal="control_pclock", reset_signal="control_presetn")}}
 
 // Concatenate registers
-logic [47:0] start_address__csr;
-logic [47:0] stop_address__csr;
-logic [47:0] address_increment__csr;
-logic [47:0] address_mask__csr;
-logic [47:0] number_transactions__csr;
-assign start_address__csr        = { start_address_1__csr       , start_address_0__csr       };
-assign stop_address__csr         = { stop_address_1__csr        , stop_address_0__csr        };
-assign address_increment__csr    = { address_increment_1__csr   , address_increment_0__csr   };
-assign address_mask__csr         = { address_mask_1__csr        , address_mask_0__csr        };
-assign number_transactions__csr  = { number_transactions_1__csr , number_transactions_0__csr };
+logic [47:0] csr__address_range_start;
+logic [47:0] csr__address_range_stop;
+logic [47:0] csr__address_range_increment;
+logic [47:0] csr__address_random_lfsr_seed;
+logic [47:0] csr__address_random_lfsr_fibonacci_taps;
+logic [46:0] csr__address_random_lfsr_gallois_taps;
+logic [47:0] csr__address_random_lfsr_mask;
+logic [47:0] csr__address_final_mask;
+logic [47:0] csr__number_transactions;
+assign csr__address_range_start                = { csr__address_range_start_0                , csr__address_range_start_1                };
+assign csr__address_range_stop                 = { csr__address_range_stop_0                 , csr__address_range_stop_1                 };
+assign csr__address_range_increment            = { csr__address_range_increment_0            , csr__address_range_increment_1            };
+assign csr__address_random_lfsr_seed           = { csr__address_random_lfsr_seed_0           , csr__address_random_lfsr_seed_1           };
+assign csr__address_random_lfsr_fibonacci_taps = { csr__address_random_lfsr_fibonacci_taps_0 , csr__address_random_lfsr_fibonacci_taps_1 };
+assign csr__address_random_lfsr_gallois_taps   = { csr__address_random_lfsr_gallois_taps_0   , csr__address_random_lfsr_gallois_taps_1   };
+assign csr__address_random_lfsr_mask           = { csr__address_random_lfsr_mask_0           , csr__address_random_lfsr_mask_1           };
+assign csr__address_final_mask                 = { csr__address_final_mask_0                 , csr__address_final_mask_1                 };
+assign csr__number_transactions                = { csr__number_transactions_0                , csr__number_transactions_1                };
+
+logic [255:0] csr__data_initial_value;
+assign csr__data_initial_value = { csr__data_initial_value_0 ,
+                                   csr__data_initial_value_1 ,
+                                   csr__data_initial_value_2 ,
+                                   csr__data_initial_value_3 ,
+                                   csr__data_initial_value_4 ,
+                                   csr__data_initial_value_5 ,
+                                   csr__data_initial_value_6 ,
+                                   csr__data_initial_value_7 };
 
 
 
@@ -118,127 +137,119 @@ assign number_transactions__csr  = { number_transactions_1__csr , number_transac
 
 /*
 
-   #####                                              #
-  #     #  ####  #    # ##### #####   ####  #         #        ####   ####  #  ####
-  #       #    # ##   #   #   #    # #    # #         #       #    # #    # # #    #
-  #       #    # # #  #   #   #    # #    # #         #       #    # #      # #
-  #       #    # #  # #   #   #####  #    # #         #       #    # #  ### # #
-  #     # #    # #   ##   #   #   #  #    # #         #       #    # #    # # #    #
-   #####   ####  #    #   #   #    #  ####  ######    #######  ####   ####  #  ####
+   #####                                                ##        #####
+  #     #  ####  #    # ##### #####   ####  #          #  #      #     # #####   ##   ##### #    #  ####
+  #       #    # ##   #   #   #    # #    # #           ##       #         #    #  #    #   #    # #
+  #       #    # # #  #   #   #    # #    # #          ###        #####    #   #    #   #   #    #  ####
+  #       #    # #  # #   #   #####  #    # #         #   # #          #   #   ######   #   #    #      #
+  #     # #    # #   ##   #   #   #  #    # #         #    #     #     #   #   #    #   #   #    # #    #
+   #####   ####  #    #   #   #    #  ####  ######     ###  #     #####    #   #    #   #    ####   ####
 
 */
 
-logic do_reset__csr;
-logic do_start__csr;
-logic do_pause__csr;
+// Control requests
+logic control__do_reset;
+logic control__do_start;
+logic control__do_pause;
 
-assign do_reset__csr = control__csr == 2'h0;
-assign do_start__csr = control__csr == 2'h1;
-assign do_pause__csr = control__csr == 2'h2;
+assign control__do_reset = csr__control == CONTROL__DO_RESET;
+assign control__do_start = csr__control == CONTROL__DO_START;
+assign control__do_pause = csr__control == CONTROL__DO_PAUSE;
 
-logic injection_do_reset;
-logic injection_do_start;
-logic injection_do_pause;
+logic generator__do_reset;
+logic generator__do_start;
+logic generator__do_pause;
 
-sync do_reset_synchronizer (
-  .clock    ( data_aclk          ),
-  .resetn   ( data_aresetn       ),
-  .data_in  ( do_reset__csr      ),
-  .data_out ( injection_do_reset )
+sync generator__do_reset__synchronizer (
+  .clock    ( data_aclock         ),
+  .resetn   ( data_aresetn        ),
+  .data_in  ( control__do_reset   ),
+  .data_out ( generator__do_reset )
 );
 
-sync do_start_synchronizer (
-  .clock    ( data_aclk          ),
-  .resetn   ( data_aresetn       ),
-  .data_in  ( do_start__csr      ),
-  .data_out ( injection_do_start )
+sync generator__do_start__synchronizer (
+  .clock    ( data_aclock         ),
+  .resetn   ( data_aresetn        ),
+  .data_in  ( control__do_start   ),
+  .data_out ( generator__do_start )
 );
 
-sync do_pause_synchronizer (
-  .clock    ( data_aclk          ),
-  .resetn   ( data_aresetn       ),
-  .data_in  ( do_pause__csr      ),
-  .data_out ( injection_do_pause )
+sync generator__do_pause__synchronizer (
+  .clock    ( data_aclock         ),
+  .resetn   ( data_aresetn        ),
+  .data_in  ( control__do_pause   ),
+  .data_out ( generator__do_pause )
 );
 
-logic injection_is_reset;
-logic injection_is_paused;
-logic injection_is_active;
-logic injection_is_finished;
+// Status feedback
+logic generator__is_idle;
+logic generator__is_active;
+logic generator__is_paused;
+logic generator__is_finished;
 
-sync is_reset_synchronizer (
-  .clock    ( control_pclk       ),
-  .resetn   ( control_presetn    ),
-  .data_in  ( injection_do_reset ),
-  .data_out ( injection_is_reset )
+logic control__is_idle;
+logic control__is_active;
+logic control__is_paused;
+logic control__is_finished;
+
+sync control__is_idle__synchronizer (
+  .clock    ( data_pclock        ),
+  .resetn   ( data_presetn       ),
+  .data_in  ( generator__is_idle ),
+  .data_out ( control__is_idle   )
 );
 
-sync is_paused_synchronizer (
-  .clock    ( control_pclk        ),
-  .resetn   ( control_presetn     ),
-  .data_in  ( injection_do_pause  ),
-  .data_out ( injection_is_paused )
+sync control__is_active__synchronizer (
+  .clock    ( data_pclock          ),
+  .resetn   ( data_presetn         ),
+  .data_in  ( generator__is_active ),
+  .data_out ( control__is_active   )
 );
 
-sync is_active_synchronizer (
-  .clock    ( control_pclk        ),
-  .resetn   ( control_presetn     ),
-  .data_in  ( injection_enable    ),
-  .data_out ( injection_is_active )
+sync control__is_paused__synchronizer (
+  .clock    ( data_pclock          ),
+  .resetn   ( data_presetn         ),
+  .data_in  ( generator__is_paused ),
+  .data_out ( control__is_paused   )
 );
 
-sync is_finished_synchronizer (
-  .clock    ( control_pclk          ),
-  .resetn   ( control_presetn       ),
-  .data_in  ( injection_finished    ),
-  .data_out ( injection_is_finished )
+sync control__is_finished__synchronizer (
+  .clock    ( data_pclock            ),
+  .resetn   ( data_presetn           ),
+  .data_in  ( generator__is_finished ),
+  .data_out ( control__is_finished   )
 );
 
-enum {
-  RESET    = STATUS__INJECTION__IS_RESET,
-  PAUSED   = STATUS__INJECTION__IS_PAUSED,
+typedef enum {
+  IDLE     = STATUS__INJECTION__IS_IDLE,
   ACTIVE   = STATUS__INJECTION__IS_ACTIVE,
+  PAUSED   = STATUS__INJECTION__IS_PAUSED,
   FINISHED = STATUS__INJECTION__IS_FINISHED
-} status_fsm_state, status_fsm_state_next;
+} status_fsm_state;
+
+status_fsm_state control__status_fsm, control__status_fsm_next;
 
 always_comb begin
-  status_fsm_state_next = status_fsm_state;
-  case (status_fsm_state)
-    RESET    : if      (injection_is_active)   status_fsm_state_next = ACTIVE;
-    PAUSED   : if      (injection_is_reset)    status_fsm_state_next = RESET;
-               else if (injection_is_active)   status_fsm_state_next = ACTIVE;
-    ACTIVE   : if      (injection_is_reset)    status_fsm_state_next = RESET;
-               else if (injection_is_paused)   status_fsm_state_next = PAUSED;
-               else if (injection_is_finished) status_fsm_state_next = FINISHED;
-    FINISHED : if      (injection_is_reset)    status_fsm_state_next = RESET;
+  control__status_fsm_next = control__status_fsm;
+  case (control__status_fsm)
+    IDLE     : if      (control__is_active)   control__status_fsm_next = ACTIVE;
+    PAUSED   : if      (control__is_idle)     control__status_fsm_next = IDLE;
+               else if (control__is_active)   control__status_fsm_next = ACTIVE;
+    ACTIVE   : if      (control__is_idle)     control__status_fsm_next = IDLE;
+               else if (control__is_paused)   control__status_fsm_next = PAUSED;
+               else if (control__is_finished) control__status_fsm_next = FINISHED;
+    FINISHED : if      (control__is_idle)     control__status_fsm_next = IDLE;
   endcase
 end
 
-always_ff @(posedge control_pclk or negedge control_presetn) begin
-  if (!control_presetn) status_fsm_state <= RESET;
-  else                  status_fsm_state <= status_fsm_state_next;
+always_ff @(posedge control_pclock or negedge control_presetn) begin
+  if (!control_presetn) control__status_fsm <= IDLE;
+  else                  control__status_fsm <= control__status_fsm_next;
 end
 
-assign status__hw_write_enable            = 1'b0;
-assign status__injection__hw_write_enable = (status_fsm_state_next != status_fsm_state);
-assign status__injection__hw_write_data   = status_fsm_state_next;
-
-logic injection_enable;
-
-logic injection_back_pressure;
-logic injection_finished;
-
-always_ff @(posedge data_aclk or negedge data_aresetn) begin
-  if (!data_aresetn) begin
-    injection_enable <= 1'd0;
-  end else begin
-    if (injection_do_pause || injection_back_pressure || injection_finished) begin
-      injection_enable <= 1'b0;
-    end else if (injection_do_start) begin
-      injection_enable <= 1'b1;
-    end
-  end
-end
+assign csr__status__hw_write_enable            = 1'b0;
+assign csr__status__injection__hw_write_enable = (control__status_fsm_next != control__status_fsm);
+assign csr__status__injection__hw_write_data   = control__status_fsm_next;
 
 
 
@@ -247,43 +258,53 @@ end
 
 /*
 
-     #                                                  #####
-    # #   #####  #####  #####  ######  ####   ####     #     # ###### #    # ###### #####    ##   ##### #  ####  #    #
-   #   #  #    # #    # #    # #      #      #         #       #      ##   # #      #    #  #  #    #   # #    # ##   #
-  #     # #    # #    # #    # #####   ####   ####     #  #### #####  # #  # #####  #    # #    #   #   # #    # # #  #
-  ####### #    # #    # #####  #           #      #    #     # #      #  # # #      #####  ######   #   # #    # #  # #
-  #     # #    # #    # #   #  #      #    # #    #    #     # #      #   ## #      #   #  #    #   #   # #    # #   ##
-  #     # #####  #####  #    # ######  ####   ####      #####  ###### #    # ###### #    # #    #   #   #  ####  #    #
+   #####
+  #     # ###### #    # ###### #####    ##   #####  ####  #####
+  #       #      ##   # #      #    #  #  #    #   #    # #    #
+  #  #### #####  # #  # #####  #    # #    #   #   #    # #    #
+  #     # #      #  # # #      #####  ######   #   #    # #####
+  #     # #      #   ## #      #   #  #    #   #   #    # #   #
+   #####  ###### #    # ###### #    # #    #   #    ####  #    #
 
 */
 
-logic [48:0] injection_address; // Extra bit for overflow
-logic [47:0] injection_countdown;
+// Address generator
+logic        generator__address_generator_enable;
+logic [47:0] generator__generated_address;
 
-always_ff @(posedge data_aclk or negedge data_aresetn) begin
-  if (!data_aresetn) begin
-    // Hardware reset
-    injection_address   <= 48'd0;
-    injection_countdown <= 48'd0;
-  end else if (injection_do_reset) begin
-    // Software reset
-    injection_address   <= start_address__csr;
-    injection_countdown <= number_transactions__csr;
-  end else begin
-    if (injection_enable == 1'b1) begin
-      if (injection_mode__csr == 1'b0) begin
-        // Inject a number of transactions
-        injection_countdown <= injection_countdown - 1;
-      end else begin
-        // Inject in an address range
-        injection_address <= injection_address + address_increment__csr;
-      end
-    end
-  end
-end
+address_generator address_generator (
+  .clock                ( data_aclock                                  ),
+  .resetn               ( data_aresetn                                 ),
+  .initialize           ( generator__do_reset                          ),
+  .enable               ( generator__address_generator_enable          ),
+  .mode_selector        ( csr__injection_mode__address_generation_mode ),
+  .range_start          ( csr__address_range_start                     ),
+  .range_increment      ( csr__address_range_increment                 ),
+  .lfsr_seed            ( csr__address_random_lfsr_seed                ),
+  .lfsr_fibonacci_taps  ( csr__address_random_lfsr_fibonacci_taps      ),
+  .lfsr_gallois_taps    ( csr__address_random_lfsr_gallois_taps        ),
+  .lfsr_mask            ( csr__address_random_lfsr_mask                ),
+  .final_mask           ( csr__address_final_mask                      ),
+  .generated_address    ( generator__generated_address                 )
+);
 
-assign injection_finished = injection_mode__csr ? (injection_address >= stop_address__csr)
-                                                : (injection_countdown == 1'b0);
+// Data generator
+logic         generator__write_data_generator_enable;
+logic [255:0] generator__generated_write_data;
+
+data_generator write_data_generator (
+  .clock           ( data_aclock                               ),
+  .resetn          ( data_aresetn                              ),
+  .initialize      ( generator__do_reset                       ),
+  .enable          ( generator__write_data_generator_enable    ),
+  .mode_selector   ( csr__injection_mode__data_generation_mode ),
+  .initial_value   ( csr__data_initial_value                   ),
+  .shift_enable    ( csr__data_shift_mode__enable              ),
+  .shift_direction ( csr__data_shift_mode__direction           ),
+  .final_byte_mask ( csr__data_final_mask                      ),
+  .generated_data  ( generator__generated_write_data           )
+);
+
 
 
 
@@ -292,153 +313,218 @@ assign injection_finished = injection_mode__csr ? (injection_address >= stop_add
 /*
 
   ###
-   #  #    #      # ######  ####  ##### #  ####  #    #
-   #  ##   #      # #      #    #   #   # #    # ##   #
-   #  # #  #      # #####  #        #   # #    # # #  #
-   #  #  # #      # #      #        #   # #    # #  # #
-   #  #   ## #    # #      #    #   #   # #    # #   ##
-  ### #    #  ####  ######  ####    #   #  ####  #    #
+   #  #    #      # ######  ####  #####  ####  #####
+   #  ##   #      # #      #    #   #   #    # #    #
+   #  # #  #      # #####  #        #   #    # #    #
+   #  #  # #      # #      #        #   #    # #####
+   #  #   ## #    # #      #    #   #   #    # #   #
+  ### #    #  ####  ######  ####    #    ####  #    #
 
 */
 
-// Write request channel
-logic  [23:0] injection__data_awid;
-logic  [31:0] injection__data_awaddr;
-logic   [7:0] injection__data_awlen;
-logic   [2:0] injection__data_awsize;
-logic   [1:0] injection__data_awburst;
-logic   [2:0] injection__data_awprot;
-logic   [3:0] injection__data_awqos;
-logic         injection__data_awvalid;
-// Write data channel
-logic [255:0] injection__data_wdata;
-logic  [31:0] injection__data_wstrb;
-logic         injection__data_wlast;
-logic         injection__data_wvalid;
-// Write response channel
-logic         injection__data_bready;
-// Read request channel
-logic  [23:0] injection__data_arid;
-logic  [31:0] injection__data_araddr;
-logic   [7:0] injection__data_arlen;
-logic   [2:0] injection__data_arsize;
-logic   [1:0] injection__data_arburst;
-logic   [2:0] injection__data_arprot;
-logic   [3:0] injection__data_arqos;
-logic         injection__data_arvalid;
-// Read data response channel
-logic         injection__data_rready;
+// Injection control
+logic injector__do_reset;
+logic injector__do_start;
+logic injector__do_pause;
+logic injector__do_finish;
+assign injector__do_reset = generator__do_reset;
+assign injector__do_start = generator__do_start;
+assign injector__do_pause = generator__do_pause;
 
-logic [23:0] injection_counter;
-logic [23:0] injection_counter_next;
-
-logic [8:0] injection_write_burst_counter;
-logic [8:0] injection_write_burst_counter_next;
+// Injection FSM
+status_fsm_state injector__status_fsm, injector__status_fsm_next;
 
 always_comb begin
-  injection_back_pressure =   1'b0;
-  injection__data_arid    =  24'd0;
-  injection__data_araddr  =  48'd0;
-  injection__data_arlen   =   8'd0;
-  injection__data_arsize  =   3'd0;
-  injection__data_arburst =   2'd0;
-  injection__data_arprot  =   3'd0;
-  injection__data_arqos   =   4'd0;
-  injection__data_arvalid =   1'b0;
-  injection__data_awid    =  24'd0;
-  injection__data_awaddr  =  48'd0;
-  injection__data_awlen   =   8'd0;
-  injection__data_awsize  =   3'd0;
-  injection__data_awburst =   2'd0;
-  injection__data_awprot  =   3'd0;
-  injection__data_awqos   =   4'd0;
-  injection__data_awvalid =   1'b0;
-  injection__data_wdata   = 256'd0;
-  injection__data_wstrb   =  32'd0;
-  injection__data_wlast   =   1'b0;
-  injection__data_wvalid  =   1'b0;
-  injection__data_rready  =   1'b1;
-  injection__data_bready  =   1'b1;
-  injection_counter_next  = injection_counter;
-  injection_write_burst_counter_next = injection_write_burst_counter;
-  if (transaction_type__direction__csr == TRANSACTION_TYPE__DIRECTION__READ) begin
-    // Read injection
-    if (injection_enable) begin
-      injection__data_arid    = injection_counter_next;
-      injection__data_araddr  = injection_address;
-      injection__data_arlen   = transaction_type__length__csr;
-      injection__data_arsize  = transaction_type__size__csr;
-      injection__data_arburst = transaction_type__burst__csr;
-      injection__data_arprot  = transaction_type__protection__csr;
-      injection__data_arqos   = transaction_type__quality_of_service__csr;
-      if (data_arready == 1'b1) injection_counter_next = injection_counter + 1;
-      else injection_back_pressure = 1'b1;
-    end else injection__data_arvalid = 1'b0;
-  end else begin
-    // Write injection
-    if (injection_enable & injection_write_burst_counter == 0) begin
-      // Set burst counter
-      injection_write_burst_counter_next = {1'b0,transaction_type__length__csr} + 1;
-      injection__data_awid    = injection_counter_next;
-      injection__data_awaddr  = injection_address;
-      injection__data_awlen   = transaction_type__length__csr;
-      injection__data_awsize  = transaction_type__size__csr;
-      injection__data_awburst = transaction_type__burst__csr;
-      injection__data_awprot  = transaction_type__protection__csr;
-      injection__data_awqos   = transaction_type__quality_of_service__csr;
-      injection__data_awvalid = 1'b1;
-      if (data_awready == 1'b1) injection_counter_next = injection_counter + 1;
-      else injection_back_pressure = 1'b1;
-    end
-    // Test again the burst counter to allow AW and W at the same time for the first beat
-    if (injection_write_burst_counter_next > 0) begin
-      // Only decrement the burst counter if the W beat was accepter
-      if (data_wready == 1'b1) injection_write_burst_counter_next = injection_write_burst_counter_next - 1;
-      injection__data_wdata  = 256'hFEDCBA9876543210FEDCBA9876543210FEDCBA9876543210FEDCBA9876543210;
-      injection__data_wstrb  = 32'hFFFFFFFF;
-      injection__data_wlast  = injection_write_burst_counter_next == 0;
-      injection__data_wvalid = 1'b1;
+  injector__status_fsm_next = injector__status_fsm;
+  case (injector__status_fsm)
+    IDLE     : if      (injector__do_start)  injector__status_fsm_next = ACTIVE;
+    PAUSED   : if      (injector__do_reset)  injector__status_fsm_next = IDLE;
+               else if (injector__do_start)  injector__status_fsm_next = ACTIVE;
+    ACTIVE   : if      (injector__do_reset)  injector__status_fsm_next = IDLE;
+               else if (injector__do_pause)  injector__status_fsm_next = PAUSED;
+               else if (injector__do_finish) injector__status_fsm_next = FINISHED;
+    FINISHED : if      (injector__do_reset)  injector__status_fsm_next = IDLE;
+  endcase
+end
+
+always_ff @(posedge control_pclock or negedge control_presetn) begin
+  if (!control_presetn) injector__status_fsm <= IDLE;
+  else                  injector__status_fsm <= injector__status_fsm_next;
+end
+
+assign generator__is_idle     = injector__status_fsm == IDLE;
+assign generator__is_active   = injector__status_fsm == PAUSED;
+assign generator__is_paused   = injector__status_fsm == ACTIVE;
+assign generator__is_finished = injector__status_fsm == FINISHED;
+
+// Injection output signals
+logic  [23:0] injector__data_awid;
+logic  [31:0] injector__data_awaddr;
+logic   [7:0] injector__data_awlen;
+logic   [2:0] injector__data_awsize;
+logic   [1:0] injector__data_awburst;
+logic   [2:0] injector__data_awprot;
+logic   [3:0] injector__data_awqos;
+logic         injector__data_awvalid;
+logic [255:0] injector__data_wdata;
+logic  [31:0] injector__data_wstrb;
+logic         injector__data_wlast;
+logic         injector__data_wvalid;
+logic         injector__data_bready;
+logic  [23:0] injector__data_arid;
+logic  [31:0] injector__data_araddr;
+logic   [7:0] injector__data_arlen;
+logic   [2:0] injector__data_arsize;
+logic   [1:0] injector__data_arburst;
+logic   [2:0] injector__data_arprot;
+logic   [3:0] injector__data_arqos;
+logic         injector__data_arvalid;
+logic         injector__data_rready;
+
+// Transaction counter
+logic [23:0] injector__transaction_counter;
+logic [23:0] injector__transaction_counter_next;
+
+// Write burst counter
+logic [8:0] injector__write_burst_counter;
+logic [8:0] injector__write_burst_counter_next;
+
+// Transaction assembly and injection combinational logic
+always_comb begin
+  injector__data_arid                =  24'd0;
+  injector__data_araddr              =  48'd0;
+  injector__data_arlen               =   8'd0;
+  injector__data_arsize              =   3'd0;
+  injector__data_arburst             =   2'd0;
+  injector__data_arprot              =   3'd0;
+  injector__data_arqos               =   4'd0;
+  injector__data_arvalid             =   1'b0;
+  injector__data_awid                =  24'd0;
+  injector__data_awaddr              =  48'd0;
+  injector__data_awlen               =   8'd0;
+  injector__data_awsize              =   3'd0;
+  injector__data_awburst             =   2'd0;
+  injector__data_awprot              =   3'd0;
+  injector__data_awqos               =   4'd0;
+  injector__data_awvalid             =   1'b0;
+  injector__data_wdata               = 256'd0;
+  injector__data_wstrb               =  32'd0;
+  injector__data_wlast               =   1'b0;
+  injector__data_wvalid              =   1'b0;
+  injector__data_rready              =   1'b1;
+  injector__data_bready              =   1'b1;
+  injector__transaction_counter_next = injector__transaction_counter;
+  injector__write_burst_counter_next = injector__write_burst_counter;
+  if (injector__status_fsm == ACTIVE) begin
+    if (csr__transaction_attributes__direction == TRANSACTION_ATTRIBUTES__DIRECTION__READ) begin
+      // Read request injection
+      injector__data_arid    = injector__transaction_counter_next;
+      injector__data_araddr  = generator__generated_address;
+      injector__data_arlen   = csr__transaction_attributes__length;
+      injector__data_arsize  = csr__transaction_attributes__size;
+      injector__data_arburst = csr__transaction_attributes__burst;
+      injector__data_arprot  = csr__transaction_attributes__protection;
+      injector__data_arqos   = csr__transaction_attributes__quality_of_service;
+      // Handshake
+      injector__data_arvalid = 1'b1;
+      if (data_arready == 1'b1) begin
+        generator__address_generator_enable = 1'b1;
+        injector__transaction_counter_next  = injector__transaction_counter + 1;
+      end else begin
+        generator__address_generator_enable = 1'b0;
+      end
+    end else begin
+      // Write request injection
+      if (injector__write_burst_counter == 0) begin
+        injector__write_burst_counter_next = {1'b0,csr__transaction_attributes__length} + 1;
+        injector__data_awid    = injector__transaction_counter_next;
+        injector__data_awaddr  = generator__generated_address;
+        injector__data_awlen   = csr__transaction_attributes__length;
+        injector__data_awsize  = csr__transaction_attributes__size;
+        injector__data_awburst = csr__transaction_attributes__burst;
+        injector__data_awprot  = csr__transaction_attributes__protection;
+        injector__data_awqos   = csr__transaction_attributes__quality_of_service;
+        injector__data_awvalid = 1'b1;
+        // Handshake
+        injector__data_awvalid = 1'b1;
+        if (data_awready == 1'b1) begin
+          generator__address_generator_enable = 1'b1;
+          injector__transaction_counter_next  = injector__transaction_counter + 1;
+        end else begin
+          generator__address_generator_enable = 1'b0;
+        end
+      end
+      // Write data injection
+      if (injector__write_burst_counter_next > 0) begin
+        injector__data_wdata  = generator__generated_write_data;
+        injector__data_wstrb  = 32'hFFFFFFFF;
+        injector__data_wlast  = injector__write_burst_counter_next == 1;
+        // Handshake
+        injector__data_wvalid = 1'b1;
+        if (data_awready == 1'b1) begin
+          generator__write_data_generator_enable = 1'b1;
+          injector__write_burst_counter_next     = injector__write_burst_counter_next - 1;
+        end else begin
+          generator__write_data_generator_enable = 1'b0;
+        end
+      end
     end
   end
 end
 
-always_ff @(posedge data_aclk or negedge data_aresetn) begin
+always_ff @(posedge data_aclock or negedge data_aresetn) begin
   if (!data_aresetn) begin
-    injection_counter             <= 24'd0;
-    injection_write_burst_counter <=  9'd0;
+    injector__transaction_counter <= 24'd0;
+    injector__write_burst_counter <=  9'd0;
   end else begin
-    injection_counter             <= injection_counter_next;
-    injection_write_burst_counter <= injection_write_burst_counter_next;
+    injector__transaction_counter <= injector__transaction_counter_next;
+    injector__write_burst_counter <= injector__write_burst_counter_next;
   end
 end
 
 // Write request channel
-assign data_awid    = injection__data_awid;
-assign data_awaddr  = injection__data_awaddr;
-assign data_awlen   = injection__data_awlen;
-assign data_awsize  = injection__data_awsize;
-assign data_awburst = injection__data_awburst;
-assign data_awprot  = injection__data_awprot;
-assign data_awqos   = injection__data_awqos;
-assign data_awvalid = injection__data_awvalid;
+assign data_awid    = injector__data_awid;
+assign data_awaddr  = injector__data_awaddr;
+assign data_awlen   = injector__data_awlen;
+assign data_awsize  = injector__data_awsize;
+assign data_awburst = injector__data_awburst;
+assign data_awprot  = injector__data_awprot;
+assign data_awqos   = injector__data_awqos;
+assign data_awvalid = injector__data_awvalid;
 // Write data channel
-assign data_wdata   = injection__data_wdata;
-assign data_wstrb   = injection__data_wstrb;
-assign data_wlast   = injection__data_wlast;
-assign data_wvalid  = injection__data_wvalid;
+assign data_wdata   = injector__data_wdata;
+assign data_wstrb   = injector__data_wstrb;
+assign data_wlast   = injector__data_wlast;
+assign data_wvalid  = injector__data_wvalid;
 // Write response channel
-assign data_bready  = injection__data_bready;
+assign data_bready  = injector__data_bready;
 // Read request channel
-assign data_arid    = injection__data_arid;
-assign data_araddr  = injection__data_araddr;
-assign data_arlen   = injection__data_arlen;
-assign data_arsize  = injection__data_arsize;
-assign data_arburst = injection__data_arburst;
-assign data_arprot  = injection__data_arprot;
-assign data_arqos   = injection__data_arqos;
-assign data_arvalid = injection__data_arvalid;
+assign data_arid    = injector__data_arid;
+assign data_araddr  = injector__data_araddr;
+assign data_arlen   = injector__data_arlen;
+assign data_arsize  = injector__data_arsize;
+assign data_arburst = injector__data_arburst;
+assign data_arprot  = injector__data_arprot;
+assign data_arqos   = injector__data_arqos;
+assign data_arvalid = injector__data_arvalid;
 // Read data response channel
-assign data_rready  = injection__data_rready;
+assign data_rready  = injector__data_rready;
 
+// Stop condition
+always_comb begin
+  injector__do_finish = 1'b0;
+  case (csr__injection_mode__stop_condition)
+    INJECTION_MODE__STOP_CONDITION__ADDRESS_RANGE: begin
+      if (generator__generated_address >= csr__address_range_stop) begin
+        injector__do_finish = 1'b1;
+      end
+    end
+    INJECTION_MODE__STOP_CONDITION__NUMBER_TRANSACTIONS: begin
+      if (injector__transaction_counter_next >= csr__number_transactions) begin
+        injector__do_finish = 1'b1;
+      end
+    end
+  endcase
+end
 
 endmodule

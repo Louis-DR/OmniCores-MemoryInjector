@@ -6,12 +6,12 @@
                            apb_prefix      = "control",
                            apb_separator   = "_",
                            apb_lowercase   = True,
-                           register_prefix = "",
-                           register_suffix = "__csr",
+                           register_prefix = "csr__",
+                           register_suffix = "",
                            field_separator = "__",
-                           field_prefix    = "",
-                           field_suffix    = "__csr",
-                           hw_write_prefix = "",
+                           field_prefix    = "csr__",
+                           field_suffix    = "",
+                           hw_write_prefix = "csr__",
                            hw_write_suffix = "__hw_write") -%}
 
 {% filter align %}
