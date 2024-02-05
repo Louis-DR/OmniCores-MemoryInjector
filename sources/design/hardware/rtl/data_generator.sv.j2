@@ -1,0 +1,61 @@
+{%- set data_width = 256 %}
+{%- set mask_width = data_width/8 %}
+{%- set lfsr_width = 32 %}
+{%- set lfsr_tabs = "31'b0100011000000000000000000000000" %}
+
+module data_generator (
+  input                         clock,
+  input                         resetn,
+  input                         initialize,
+  input                         enable,
+  input                         mode_selector,
+  input  {{data_width|arrsize}} initial_value,
+  input                         shift_enable,
+  input                         shift_direction,
+  input  {{mask_width|arrsize}} final_byte_mask,
+  output {{data_width|arrsize}} generated_data
+);
+
+localparam LFSR_TAPS = {{lfsr_tabs}};
+
+logic {{data_width|arrsize}} data;
+logic {{data_width|arrsize}} data_next;
+logic {{data_width|arrsize}} data_masked;
+
+genvar lfsr_idx;
+always_comb begin
+  data_next = data;
+  if (mode_selector) begin
+    {%- filter align %} {%- for lfsr_idx in range(0,data_width,lfsr_width) %}
+    data_next[ § {{lfsr_idx+lfsr_width-1}} : §§ {{lfsr_idx}} §§ ] = { data[ § {{lfsr_idx}} §§ ] , ( { {{lfsr_width-1}} {data[ § {{lfsr_idx}} §§ ]} } § & LFSR_TAPS ) ^ data[ § {{lfsr_idx+lfsr_width-1}} : §§ {{lfsr_idx+1}} §§ ] };
+    {%- endfor %} {% endfilter %}
+  end else begin
+    if (shift_enable) begin
+      if (shift_direction) begin
+        data_next = { data[0] , data[{{data_width-1}}:1] };
+      end else begin
+        data_next = { data[{{data_width-2}}:0] , data[{{data_width-1}}] };
+      end
+    end
+  end
+end
+
+always_ff @(posedge clock or negedge resetn) begin
+  if (!resetn) begin
+    data <= 256'd0;
+  end else if (initialize) begin
+    data <= initial_value;
+  end else begin
+    data <= data_next;
+  end
+end
+
+always_comb begin
+  {%- filter align %} {%- for mask_byte in range(0,data_width,8) %}
+  data_masked[ § {{mask_byte+7}} : §§ {{mask_byte}} §§ ] = final_byte_mask[ § {{(mask_byte/8)|int}} §§ ] ? data[ § {{mask_byte+7}} : §§ {{mask_byte}} §§ ] : 8'd0;
+  {%- endfor %} {% endfilter %}
+end
+
+assign generated_data = data_masked;
+
+endmodule
