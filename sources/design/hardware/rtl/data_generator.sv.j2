@@ -37,11 +37,11 @@ assign data_next_shift = shift_direction ? { data[ § 0 §§] , data[ § {{data_
                                          : { data[ § {{data_width-2}} : 0 §§ ] , data[ § {{data_width-1}} § ] };
 {%- endfilter %}
 
-assign data_next = mode_selector ? data_next_lfsr : data_next_shift;
+assign data_next = enable ? (mode_selector ? data_next_lfsr : data_next_shift) : {{data_width}}'d0;
 
 always_ff @(posedge clock or negedge resetn) begin
   if (!resetn) begin
-    data <= 256'd0;
+    data <= {{data_width}}'d0;
   end else if (initialize) begin
     data <= initial_value;
   end else begin
