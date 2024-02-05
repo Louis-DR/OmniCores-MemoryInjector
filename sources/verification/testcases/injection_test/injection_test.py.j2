@@ -44,11 +44,11 @@ async def injection_test(dut:SimHandleBase):
   await ClockCycles(dut.control_pclock, 10)
 
   # Configure for reads
-  await master.busy_send(apb.APBTransaction(address = csr__injection_mode__address, data = 0x0)) # Range address
-  await master.busy_send(apb.APBTransaction(address = csr__address_range_start_0__address, data = 0x1000)) # Start address
-  await master.busy_send(apb.APBTransaction(address = csr__address_range_stop_0__address, data = 0x4000)) # Start address
-  await master.busy_send(apb.APBTransaction(address = csr__address_range_increment_0__address, data = 0x20)) # Address increment
-  await master.busy_send(apb.APBTransaction(address = csr__transaction_attributes__address, data = 0x0)) # Read transaction
+  await master.busy_send(apb.APBTransaction(address = csr__injection_mode__address,            data = 0x0    )) # Range address
+  await master.busy_send(apb.APBTransaction(address = csr__address_range_start_0__address,     data = 0x1000 )) # Start address
+  await master.busy_send(apb.APBTransaction(address = csr__address_range_stop_0__address,      data = 0x4000 )) # Start address
+  await master.busy_send(apb.APBTransaction(address = csr__address_range_increment_0__address, data = 0x20   )) # Address increment
+  await master.busy_send(apb.APBTransaction(address = csr__transaction_attributes__address,    data = 0x0    )) # Read transaction
 
   # Wait
   await ClockCycles(dut.control_pclock, 10)
@@ -72,12 +72,12 @@ async def injection_test(dut:SimHandleBase):
   await ClockCycles(dut.control_pclock, 10)
 
   # Configure for writes
-  await master.busy_send(apb.APBTransaction(address = csr__injection_mode__address, data = 0x0 | 0x1 << 1)) # Range address & random data
-  await master.busy_send(apb.APBTransaction(address = csr__address_range_start_0__address, data = 0x1000)) # Start address
-  await master.busy_send(apb.APBTransaction(address = csr__address_range_stop_0__address, data = 0x4000)) # Start address
-  await master.busy_send(apb.APBTransaction(address = csr__address_range_increment_0__address, data = 0x20)) # Address increment
-  await master.busy_send(apb.APBTransaction(address = csr__data_initial_value_0__address, data = 0xDEADBEEF)) # Initial random data seed
-  await master.busy_send(apb.APBTransaction(address = csr__transaction_attributes__address, data = 0x1 | 0x1 << 1)) # Write transaction
+  await master.busy_send(apb.APBTransaction(address = csr__injection_mode__address,            data = 0x0 | 0x1 << 1 )) # Range address & random data
+  await master.busy_send(apb.APBTransaction(address = csr__address_range_start_0__address,     data = 0x1000         )) # Start address
+  await master.busy_send(apb.APBTransaction(address = csr__address_range_stop_0__address,      data = 0x4000         )) # Start address
+  await master.busy_send(apb.APBTransaction(address = csr__address_range_increment_0__address, data = 0x20           )) # Address increment
+  await master.busy_send(apb.APBTransaction(address = csr__data_initial_value_0__address,      data = 0xDEADBEEF     )) # Initial random data seed
+  await master.busy_send(apb.APBTransaction(address = csr__transaction_attributes__address,    data = 0x1 | 0x1 << 1 )) # Write transaction
 
   await ClockCycles(dut.control_pclock, 5)
 
