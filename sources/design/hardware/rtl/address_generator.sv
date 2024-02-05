@@ -39,9 +39,9 @@ always_ff @(posedge clock or negedge resetn) begin
     address <= 48'd0;
   end else if (initialize) begin
     if (mode_selector) begin
-      address <= range_start;
-    end else begin
       address <= lfsr_seed;
+    end else begin
+      address <= range_start;
     end
   end else begin
     address <= address_next;
