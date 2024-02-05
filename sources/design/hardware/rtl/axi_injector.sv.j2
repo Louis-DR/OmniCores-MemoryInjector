@@ -193,29 +193,29 @@ logic control__is_paused;
 logic control__is_finished;
 
 sync control__is_idle__synchronizer (
-  .clock    ( data_pclock        ),
-  .resetn   ( data_presetn       ),
+  .clock    ( control_pclock     ),
+  .resetn   ( control_presetn    ),
   .data_in  ( generator__is_idle ),
   .data_out ( control__is_idle   )
 );
 
 sync control__is_active__synchronizer (
-  .clock    ( data_pclock          ),
-  .resetn   ( data_presetn         ),
+  .clock    ( control_pclock       ),
+  .resetn   ( control_presetn      ),
   .data_in  ( generator__is_active ),
   .data_out ( control__is_active   )
 );
 
 sync control__is_paused__synchronizer (
-  .clock    ( data_pclock          ),
-  .resetn   ( data_presetn         ),
+  .clock    ( control_pclock       ),
+  .resetn   ( control_presetn      ),
   .data_in  ( generator__is_paused ),
   .data_out ( control__is_paused   )
 );
 
 sync control__is_finished__synchronizer (
-  .clock    ( data_pclock            ),
-  .resetn   ( data_presetn           ),
+  .clock    ( control_pclock         ),
+  .resetn   ( control_presetn        ),
   .data_in  ( generator__is_finished ),
   .data_out ( control__is_finished   )
 );
@@ -391,30 +391,32 @@ logic [8:0] injector__write_burst_counter_next;
 
 // Transaction assembly and injection combinational logic
 always_comb begin
-  injector__data_arid                =  24'd0;
-  injector__data_araddr              =  48'd0;
-  injector__data_arlen               =   8'd0;
-  injector__data_arsize              =   3'd0;
-  injector__data_arburst             =   2'd0;
-  injector__data_arprot              =   3'd0;
-  injector__data_arqos               =   4'd0;
-  injector__data_arvalid             =   1'b0;
-  injector__data_awid                =  24'd0;
-  injector__data_awaddr              =  48'd0;
-  injector__data_awlen               =   8'd0;
-  injector__data_awsize              =   3'd0;
-  injector__data_awburst             =   2'd0;
-  injector__data_awprot              =   3'd0;
-  injector__data_awqos               =   4'd0;
-  injector__data_awvalid             =   1'b0;
-  injector__data_wdata               = 256'd0;
-  injector__data_wstrb               =  32'd0;
-  injector__data_wlast               =   1'b0;
-  injector__data_wvalid              =   1'b0;
-  injector__data_rready              =   1'b1;
-  injector__data_bready              =   1'b1;
-  injector__transaction_counter_next = injector__transaction_counter;
-  injector__write_burst_counter_next = injector__write_burst_counter;
+  injector__data_arid    =  24'd0;
+  injector__data_araddr  =  48'd0;
+  injector__data_arlen   =   8'd0;
+  injector__data_arsize  =   3'd0;
+  injector__data_arburst =   2'd0;
+  injector__data_arprot  =   3'd0;
+  injector__data_arqos   =   4'd0;
+  injector__data_arvalid =   1'b0;
+  injector__data_awid    =  24'd0;
+  injector__data_awaddr  =  48'd0;
+  injector__data_awlen   =   8'd0;
+  injector__data_awsize  =   3'd0;
+  injector__data_awburst =   2'd0;
+  injector__data_awprot  =   3'd0;
+  injector__data_awqos   =   4'd0;
+  injector__data_awvalid =   1'b0;
+  injector__data_wdata   = 256'd0;
+  injector__data_wstrb   =  32'd0;
+  injector__data_wlast   =   1'b0;
+  injector__data_wvalid  =   1'b0;
+  injector__data_rready  =   1'b1;
+  injector__data_bready  =   1'b1;
+  generator__address_generator_enable    = 1'b0;
+  generator__write_data_generator_enable = 1'b0;
+  injector__transaction_counter_next     = injector__transaction_counter;
+  injector__write_burst_counter_next     = injector__write_burst_counter;
   if (injector__status_fsm == ACTIVE) begin
     if (csr__transaction_attributes__direction == TRANSACTION_ATTRIBUTES__DIRECTION__READ) begin
       // Read request injection
