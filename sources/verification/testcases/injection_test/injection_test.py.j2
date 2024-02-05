@@ -32,6 +32,7 @@ async def injection_test(dut:SimHandleBase):
   dut.data_rlast.value   = 0
   dut.data_rvalid.value  = 1
 
+  # Reset the injector
   dut.control_presetn.value = 0
   dut.data_aresetn.value = 0
   await ClockCycles(dut.control_pclock, 2)
@@ -39,14 +40,44 @@ async def injection_test(dut:SimHandleBase):
   dut.data_aresetn.value = 1
   await ClockCycles(dut.control_pclock, 2)
 
-  await ClockCycles(dut.control_pclock, 20)
+  # Wait
+  await ClockCycles(dut.control_pclock, 10)
 
-  # Configure
-  await master.busy_send(apb.APBTransaction(address = csr__injection_mode__address, data = 0x0)) # Injection mode
+  # Configure for reads
+  await master.busy_send(apb.APBTransaction(address = csr__injection_mode__address, data = 0x0)) # Range address
   await master.busy_send(apb.APBTransaction(address = csr__address_range_start_0__address, data = 0x1000)) # Start address
   await master.busy_send(apb.APBTransaction(address = csr__address_range_stop_0__address, data = 0x4000)) # Start address
   await master.busy_send(apb.APBTransaction(address = csr__address_range_increment_0__address, data = 0x20)) # Address increment
   await master.busy_send(apb.APBTransaction(address = csr__transaction_attributes__address, data = 0x0)) # Read transaction
+
+  # Wait
+  await ClockCycles(dut.control_pclock, 10)
+
+  # Start
+  await master.busy_send(apb.APBTransaction(address = csr__control__address, data = 0x1)) # Start
+
+  # Wait until injection is done
+  pooling_iterations = 100
+  while pooling_iterations != 0:
+    transaction = apb.APBTransaction(address = csr__status__address) # Status
+    await master.busy_send(transaction)
+    if ((transaction.data & 0b11) == 0b11):
+      break
+    pooling_iterations -= 1
+
+  # Reset
+  await master.busy_send(apb.APBTransaction(address = csr__control__address, data = 0x0)) # Reset
+
+  # Wait
+  await ClockCycles(dut.control_pclock, 10)
+
+  # Configure for writes
+  await master.busy_send(apb.APBTransaction(address = csr__injection_mode__address, data = 0x0 | 0x1 << 1)) # Range address & random data
+  await master.busy_send(apb.APBTransaction(address = csr__address_range_start_0__address, data = 0x1000)) # Start address
+  await master.busy_send(apb.APBTransaction(address = csr__address_range_stop_0__address, data = 0x4000)) # Start address
+  await master.busy_send(apb.APBTransaction(address = csr__address_range_increment_0__address, data = 0x20)) # Address increment
+  await master.busy_send(apb.APBTransaction(address = csr__data_initial_value_0__address, data = 0xDEADBEEF)) # Initial random data seed
+  await master.busy_send(apb.APBTransaction(address = csr__transaction_attributes__address, data = 0x1 | 0x1 << 1)) # Write transaction
 
   await ClockCycles(dut.control_pclock, 5)
 
@@ -63,12 +94,6 @@ async def injection_test(dut:SimHandleBase):
     if ((transaction.data & 0b11) == 0b11):
       break
     pooling_iterations -= 1
-
-  # Reset
-  await master.busy_send(apb.APBTransaction(address = csr__control__address, data = 0x0)) # Reset
-
-
-  await ClockCycles(dut.control_pclock, 25)
 
 
   await ClockCycles(dut.control_pclock, 100)
