@@ -75,7 +75,9 @@ VERILATOR_FLAGS        = --binary -O3 -j 0 -Wall -Wno-UNSIGNED --Mdir $(VERILATO
 
 TESTCASES_DIR    = $(VERIFICATION_GENERATED_DIR)/testcases/
 BASETEST         = base_test
-TESTCASES        = $(filter-out $(BASETEST),$(shell basename $(wildcard $(TESTCASES_DIR)/*/)))
+BASETEST_DIR     = $(TESTCASES_DIR)/base_test
+# Add base_test directory to have more than 2 arguments, otherwise basename doesn't work the same way
+TESTCASES        = $(filter-out $(BASETEST),$(shell basename $(BASETEST_DIR) $(wildcard $(TESTCASES_DIR)/*/)))
 export TESTCASES_DIR
 
 TESTBENCH_TOP_MODULE = axi_injector_tb
@@ -106,9 +108,6 @@ PYTHON      = python3.11
 DATE_CMD = date -u +"%Y/%m/%d-%T"
 TIME_LOG = $(BUILD_DIR)/make_time.log
 export TIME_LOG
-
-test:
-	echo $(DESIGN_FILES)
 
 .PHONY: build
 build: $(J2GPP_SOURCE_FILES)
