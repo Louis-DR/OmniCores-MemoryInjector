@@ -1,4 +1,4 @@
-{% from "macros.j2" import apb_register_bank %}
+{% from "verilog_macros.j2" import apb_register_bank %}
 
 module axi_injector (
   // ┌─────────────────────────────┐
@@ -110,25 +110,25 @@ logic [46:0] csr__address_random_lfsr_gallois_taps;
 logic [47:0] csr__address_random_lfsr_mask;
 logic [47:0] csr__address_final_mask;
 logic [47:0] csr__number_transactions;
-assign csr__address_range_start                = { csr__address_range_start_0                , csr__address_range_start_1                };
-assign csr__address_range_stop                 = { csr__address_range_stop_0                 , csr__address_range_stop_1                 };
-assign csr__address_range_increment            = { csr__address_range_increment_0            , csr__address_range_increment_1            };
-assign csr__address_random_lfsr_seed           = { csr__address_random_lfsr_seed_0           , csr__address_random_lfsr_seed_1           };
-assign csr__address_random_lfsr_fibonacci_taps = { csr__address_random_lfsr_fibonacci_taps_0 , csr__address_random_lfsr_fibonacci_taps_1 };
-assign csr__address_random_lfsr_gallois_taps   = { csr__address_random_lfsr_gallois_taps_0   , csr__address_random_lfsr_gallois_taps_1   };
-assign csr__address_random_lfsr_mask           = { csr__address_random_lfsr_mask_0           , csr__address_random_lfsr_mask_1           };
-assign csr__address_final_mask                 = { csr__address_final_mask_0                 , csr__address_final_mask_1                 };
-assign csr__number_transactions                = { csr__number_transactions_0                , csr__number_transactions_1                };
+assign csr__address_range_start                = { csr__address_range_start_1                , csr__address_range_start_0                };
+assign csr__address_range_stop                 = { csr__address_range_stop_1                 , csr__address_range_stop_0                 };
+assign csr__address_range_increment            = { csr__address_range_increment_1            , csr__address_range_increment_0            };
+assign csr__address_random_lfsr_seed           = { csr__address_random_lfsr_seed_1           , csr__address_random_lfsr_seed_0           };
+assign csr__address_random_lfsr_fibonacci_taps = { csr__address_random_lfsr_fibonacci_taps_1 , csr__address_random_lfsr_fibonacci_taps_0 };
+assign csr__address_random_lfsr_gallois_taps   = { csr__address_random_lfsr_gallois_taps_1   , csr__address_random_lfsr_gallois_taps_0   };
+assign csr__address_random_lfsr_mask           = { csr__address_random_lfsr_mask_1           , csr__address_random_lfsr_mask_0           };
+assign csr__address_final_mask                 = { csr__address_final_mask_1                 , csr__address_final_mask_0                 };
+assign csr__number_transactions                = { csr__number_transactions_1                , csr__number_transactions_0                };
 
 logic [255:0] csr__data_initial_value;
-assign csr__data_initial_value = { csr__data_initial_value_0 ,
-                                   csr__data_initial_value_1 ,
-                                   csr__data_initial_value_2 ,
-                                   csr__data_initial_value_3 ,
-                                   csr__data_initial_value_4 ,
-                                   csr__data_initial_value_5 ,
+assign csr__data_initial_value = { csr__data_initial_value_7 ,
                                    csr__data_initial_value_6 ,
-                                   csr__data_initial_value_7 };
+                                   csr__data_initial_value_5 ,
+                                   csr__data_initial_value_4 ,
+                                   csr__data_initial_value_3 ,
+                                   csr__data_initial_value_2 ,
+                                   csr__data_initial_value_1 ,
+                                   csr__data_initial_value_0 };
 
 
 
