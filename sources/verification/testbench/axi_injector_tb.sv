@@ -22,7 +22,7 @@ module axi_injector_tb (
   input          data_aresetn,
   // Write request channel
   output  [23:0] data_awid,
-  output  [31:0] data_awaddr,
+  output  [47:0] data_awaddr,
   output   [7:0] data_awlen,
   output   [2:0] data_awsize,
   output   [1:0] data_awburst,
@@ -43,7 +43,7 @@ module axi_injector_tb (
   output         data_bready,
   // Read request channel
   output  [23:0] data_arid,
-  output  [31:0] data_araddr,
+  output  [47:0] data_araddr,
   output   [7:0] data_arlen,
   output   [2:0] data_arsize,
   output   [1:0] data_arburst,
