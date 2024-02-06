@@ -17,7 +17,7 @@ csr__{{register.name}}__address § = 0x{{register.offset|hexadecimal}}
 @cocotb.test()
 async def injection_test(dut:SimHandleBase):
   apb_master = apb.APBMasterDriver(dut, "control", dut.control_pclock, uppercase=False)
-  axi_ram    = axi.AxiRam(axi.AxiBus.from_prefix(dut, "data"), dut.data_aclock, dut.data_aresetn, size=2**48)
+  axi_ram    = axi.AxiRam(axi.AxiBus.from_prefix(dut, "data"), dut.data_aclock, dut.data_aresetn, size=2**48, reset_active_level=False)
 
   cocotb.start_soon(Clock(dut.control_pclock, 10, units="ns").start())
   cocotb.start_soon(Clock(dut.data_aclock, 1, units="ns").start())
