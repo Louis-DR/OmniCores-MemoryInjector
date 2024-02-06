@@ -242,8 +242,11 @@ always_comb begin
   control__status_fsm_next = control__status_fsm;
   case (control__status_fsm)
     IDLE     : if      (control__is_active)   control__status_fsm_next = ACTIVE;
+               else if (control__is_paused)   control__status_fsm_next = PAUSED;
+               else if (control__is_finished) control__status_fsm_next = FINISHED;
     PAUSED   : if      (control__is_idle)     control__status_fsm_next = IDLE;
                else if (control__is_active)   control__status_fsm_next = ACTIVE;
+               else if (control__is_finished) control__status_fsm_next = FINISHED;
     ACTIVE   : if      (control__is_idle)     control__status_fsm_next = IDLE;
                else if (control__is_paused)   control__status_fsm_next = PAUSED;
                else if (control__is_finished) control__status_fsm_next = FINISHED;
@@ -367,8 +370,8 @@ end
 
 // Generation status for control block
 assign generator__is_idle     = injector__status_fsm == IDLE;
-assign generator__is_active   = injector__status_fsm == PAUSED;
-assign generator__is_paused   = injector__status_fsm == ACTIVE;
+assign generator__is_active   = injector__status_fsm == ACTIVE;
+assign generator__is_paused   = injector__status_fsm == PAUSED;
 assign generator__is_finished = injector__status_fsm == FINISHED;
 
 // Injection output signals
