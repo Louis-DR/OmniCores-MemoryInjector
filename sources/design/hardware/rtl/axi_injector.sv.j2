@@ -360,9 +360,9 @@ always_comb begin
 end
 
 // Injection FSM sequential
-always_ff @(posedge control_pclock or negedge control_presetn) begin
-  if (!control_presetn) injector__status_fsm <= IDLE;
-  else                  injector__status_fsm <= injector__status_fsm_next;
+always_ff @(posedge data_aclock or negedge data_aresetn) begin
+  if (!data_aresetn) injector__status_fsm <= IDLE;
+  else               injector__status_fsm <= injector__status_fsm_next;
 end
 
 // Generation status for control block
