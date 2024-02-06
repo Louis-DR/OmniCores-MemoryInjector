@@ -1,21 +1,21 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Mon Feb  5 22:11:50 2024
+[*] Tue Feb  6 15:29:29 2024
 [*]
 [dumpfile] "/Users/louis/Library/CloudStorage/Dropbox/Projets/InjectorAXI/generated/verification/testcases/injection_test/waveform.vcd"
-[dumpfile_mtime] "Mon Feb  5 22:10:35 2024"
-[dumpfile_size] 889823
+[dumpfile_mtime] "Tue Feb  6 15:28:13 2024"
+[dumpfile_size] 1268291
 [savefile] "/Users/louis/Library/CloudStorage/Dropbox/Projets/InjectorAXI/make/waves/injection_test.gtkw"
-[timestart] 2644150
+[timestart] 2668000
 [size] 1728 1051
 [pos] -1 -1
-*-12.547401 2650000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-12.192584 2670000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] axi_injector_tb.
 [treeopen] axi_injector_tb.axi_injector.
-[sst_width] 193
-[signals_width] 512
+[sst_width] 260
+[signals_width] 485
 [sst_expanded] 1
-[sst_vpaned_height] 200
+[sst_vpaned_height] 303
 @800200
 -CONTROL
 @28
@@ -35,8 +35,9 @@ axi_injector_tb.control_prdata[31:0]
 -CONTROL
 @800200
 -STATE
-@28
+@29
 axi_injector_tb.axi_injector.data_aclock
+@28
 axi_injector_tb.axi_injector.data_aresetn
 @200
 -
@@ -51,6 +52,7 @@ axi_injector_tb.axi_injector.control__is_idle
 axi_injector_tb.axi_injector.control__is_active
 axi_injector_tb.axi_injector.control__is_paused
 axi_injector_tb.axi_injector.control__is_finished
+axi_injector_tb.axi_injector.control__is_waiting_outstanding
 @200
 -
 @420
@@ -94,20 +96,29 @@ axi_injector_tb.axi_injector.injector__status_fsm_next
 @200
 -
 @22
-axi_injector_tb.axi_injector.injector__transaction_counter[23:0]
-axi_injector_tb.axi_injector.injector__transaction_counter_next[23:0]
+axi_injector_tb.axi_injector.injector__injected_transaction_counter[23:0]
+axi_injector_tb.axi_injector.injector__injected_transaction_counter_next[23:0]
 @200
 -
 @22
 axi_injector_tb.axi_injector.injector__write_burst_counter[8:0]
 axi_injector_tb.axi_injector.injector__write_burst_counter_next[8:0]
+@200
+-
+@28
+axi_injector_tb.axi_injector.collector__is_waiting
+axi_injector_tb.axi_injector.collector__is_finished
+@200
+-
+@22
+axi_injector_tb.axi_injector.collector__outstanding_transaction_counter[23:0]
+axi_injector_tb.axi_injector.collector__outstanding_transaction_counter_next[23:0]
 @1000200
 -STATE
 @800200
 -DATA
-@29
-axi_injector_tb.data_aclock
 @28
+axi_injector_tb.data_aclock
 axi_injector_tb.data_aresetn
 @200
 -

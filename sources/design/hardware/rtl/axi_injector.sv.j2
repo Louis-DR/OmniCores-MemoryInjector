@@ -191,6 +191,7 @@ logic control__is_idle;
 logic control__is_active;
 logic control__is_paused;
 logic control__is_finished;
+logic control__is_waiting_outstanding;
 
 sync control__is_idle__synchronizer (
   .clock    ( control_pclock     ),
@@ -220,6 +221,14 @@ sync control__is_finished__synchronizer (
   .data_out ( control__is_finished   )
 );
 
+sync control__is_waiting_outstanding__synchronizer (
+  .clock    ( control_pclock                  ),
+  .resetn   ( control_presetn                 ),
+  .data_in  ( collector__is_waiting           ),
+  .data_out ( control__is_waiting_outstanding )
+);
+
+// Status FSM in control domain
 typedef enum {
   IDLE     = STATUS__INJECTION__IS_IDLE,
   ACTIVE   = STATUS__INJECTION__IS_ACTIVE,
@@ -247,10 +256,12 @@ always_ff @(posedge control_pclock or negedge control_presetn) begin
   else                  control__status_fsm <= control__status_fsm_next;
 end
 
+// Write status to status register
 assign csr__status__hw_write_enable            = 1'b0;
 assign csr__status__injection__hw_write_enable = (control__status_fsm_next != control__status_fsm);
 assign csr__status__injection__hw_write_data   = control__status_fsm_next;
-
+assign csr__status__reception__hw_write_enable = 1'b1;
+assign csr__status__reception__hw_write_data   = control__is_waiting_outstanding;
 
 
 
@@ -331,9 +342,10 @@ assign injector__do_reset = generator__do_reset;
 assign injector__do_start = generator__do_start;
 assign injector__do_pause = generator__do_pause;
 
-// Injection FSM
+// Injection FSM state
 status_fsm_state injector__status_fsm, injector__status_fsm_next;
 
+// Injection FSM combinational
 always_comb begin
   injector__status_fsm_next = injector__status_fsm;
   case (injector__status_fsm)
@@ -347,11 +359,13 @@ always_comb begin
   endcase
 end
 
+// Injection FSM sequential
 always_ff @(posedge control_pclock or negedge control_presetn) begin
   if (!control_presetn) injector__status_fsm <= IDLE;
   else                  injector__status_fsm <= injector__status_fsm_next;
 end
 
+// Generation status for control block
 assign generator__is_idle     = injector__status_fsm == IDLE;
 assign generator__is_active   = injector__status_fsm == PAUSED;
 assign generator__is_paused   = injector__status_fsm == ACTIVE;
@@ -382,8 +396,8 @@ logic         injector__data_arvalid;
 logic         injector__data_rready;
 
 // Transaction counter
-logic [23:0] injector__transaction_counter;
-logic [23:0] injector__transaction_counter_next;
+logic [23:0] injector__injected_transaction_counter;
+logic [23:0] injector__injected_transaction_counter_next;
 
 // Write burst counter
 logic [8:0] injector__write_burst_counter;
@@ -413,14 +427,14 @@ always_comb begin
   injector__data_wvalid  =   1'b0;
   injector__data_rready  =   1'b1;
   injector__data_bready  =   1'b1;
-  generator__address_generator_enable    = 1'b0;
-  generator__write_data_generator_enable = 1'b0;
-  injector__transaction_counter_next     = injector__transaction_counter;
-  injector__write_burst_counter_next     = injector__write_burst_counter;
+  generator__address_generator_enable         = 1'b0;
+  generator__write_data_generator_enable      = 1'b0;
+  injector__injected_transaction_counter_next = injector__injected_transaction_counter;
+  injector__write_burst_counter_next          = injector__write_burst_counter;
   if (injector__status_fsm == ACTIVE) begin
     if (csr__transaction_attributes__direction == TRANSACTION_ATTRIBUTES__DIRECTION__READ) begin
       // Read request injection
-      injector__data_arid    = injector__transaction_counter_next;
+      injector__data_arid    = injector__injected_transaction_counter_next;
       injector__data_araddr  = generator__generated_address;
       injector__data_arlen   = csr__transaction_attributes__length;
       injector__data_arsize  = csr__transaction_attributes__size;
@@ -431,7 +445,7 @@ always_comb begin
       injector__data_arvalid = 1'b1;
       if (data_arready == 1'b1) begin
         generator__address_generator_enable = 1'b1;
-        injector__transaction_counter_next  = injector__transaction_counter + 1;
+        injector__injected_transaction_counter_next = injector__injected_transaction_counter + 1;
       end else begin
         generator__address_generator_enable = 1'b0;
       end
@@ -439,7 +453,7 @@ always_comb begin
       // Write request injection
       if (injector__write_burst_counter == 0) begin
         injector__write_burst_counter_next = {1'b0,csr__transaction_attributes__length} + 1;
-        injector__data_awid    = injector__transaction_counter_next;
+        injector__data_awid    = injector__injected_transaction_counter_next;
         injector__data_awaddr  = generator__generated_address;
         injector__data_awlen   = csr__transaction_attributes__length;
         injector__data_awsize  = csr__transaction_attributes__size;
@@ -451,16 +465,16 @@ always_comb begin
         injector__data_awvalid = 1'b1;
         if (data_awready == 1'b1) begin
           generator__address_generator_enable = 1'b1;
-          injector__transaction_counter_next  = injector__transaction_counter + 1;
+          injector__injected_transaction_counter_next = injector__injected_transaction_counter + 1;
         end else begin
           generator__address_generator_enable = 1'b0;
         end
       end
       // Write data injection
       if (injector__write_burst_counter_next > 0) begin
-        injector__data_wdata  = generator__generated_write_data;
-        injector__data_wstrb  = 32'hFFFFFFFF;
-        injector__data_wlast  = injector__write_burst_counter_next == 1;
+        injector__data_wdata = generator__generated_write_data;
+        injector__data_wstrb = 32'hFFFFFFFF;
+        injector__data_wlast = injector__write_burst_counter_next == 1;
         // Handshake
         injector__data_wvalid = 1'b1;
         if (data_awready == 1'b1) begin
@@ -474,13 +488,14 @@ always_comb begin
   end
 end
 
+// Update flops
 always_ff @(posedge data_aclock or negedge data_aresetn) begin
-  if (!data_aresetn) begin
-    injector__transaction_counter <= 24'd0;
-    injector__write_burst_counter <=  9'd0;
+  if (!data_aresetn | injector__do_reset) begin
+    injector__injected_transaction_counter <= 24'd0;
+    injector__write_burst_counter          <=  9'd0;
   end else begin
-    injector__transaction_counter <= injector__transaction_counter_next;
-    injector__write_burst_counter <= injector__write_burst_counter_next;
+    injector__injected_transaction_counter <= injector__injected_transaction_counter_next;
+    injector__write_burst_counter          <= injector__write_burst_counter_next;
   end
 end
 
@@ -522,11 +537,69 @@ always_comb begin
       end
     end
     INJECTION_MODE__STOP_CONDITION__NUMBER_TRANSACTIONS: begin
-      if (injector__transaction_counter_next >= csr__number_transactions) begin
+      if (injector__injected_transaction_counter_next >= csr__number_transactions) begin
         injector__do_finish = 1'b1;
       end
     end
   endcase
 end
+
+
+
+
+
+
+/*
+
+   #####
+  #     #  ####  #      #      ######  ####  #####  ####  #####
+  #       #    # #      #      #      #    #   #   #    # #    #
+  #       #    # #      #      #####  #        #   #    # #    #
+  #       #    # #      #      #      #        #   #    # #####
+  #     # #    # #      #      #      #    #   #   #    # #   #
+   #####   ####  ###### ###### ######  ####    #    ####  #    #
+
+*/
+
+// Waiting for the responses to outstanding transactions
+logic collector__is_waiting;
+logic collector__is_finished;
+
+// Error flag for counter overflow or underflow
+logic collector__error_flag;
+logic collector__error_flag_next;
+
+// Count the number of outstanding transactions
+logic [24:0] collector__outstanding_transaction_counter;
+logic [24:0] collector__outstanding_transaction_counter_next;
+
+// Update the counter with the AXI handshake
+always_comb begin
+  collector__outstanding_transaction_counter_next = collector__outstanding_transaction_counter;
+  if (data_awvalid & data_awready) collector__outstanding_transaction_counter_next ++;
+  if (data_arvalid & data_arready) collector__outstanding_transaction_counter_next ++;
+  if (data_bvalid  & data_bready ) collector__outstanding_transaction_counter_next --;
+  if (data_rvalid  & data_rready ) collector__outstanding_transaction_counter_next --;
+end
+
+// Overflow or underflow
+assign collector__error_flag_next = collector__outstanding_transaction_counter_next[24];
+
+// Update flops
+always_ff @(posedge data_aclock or negedge data_aresetn) begin
+  if (!data_aresetn) begin
+    collector__outstanding_transaction_counter <= 24'd0;
+    collector__error_flag                      <= 1'b0;
+  end else begin
+    collector__outstanding_transaction_counter <= collector__outstanding_transaction_counter_next;
+    collector__error_flag                      <= collector__error_flag_next;
+  end
+end
+
+// Collection status for control block
+assign collector__is_waiting  = collector__outstanding_transaction_counter != 24'd0;
+assign collector__is_finished = ~collector__is_waiting;
+
+
 
 endmodule
