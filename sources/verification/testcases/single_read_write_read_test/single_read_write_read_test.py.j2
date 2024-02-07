@@ -23,15 +23,14 @@ async def single_read_write_read_test(dut:SimHandleBase):
   cocotb.start_soon(Clock(dut.control_pclock, 10, units="ns").start())
   cocotb.start_soon(Clock(dut.data_aclock, 1, units="ns").start())
 
+
+
   # Reset the injector
   dut.control_presetn.value = 0
   dut.data_aresetn.value = 0
   await ClockCycles(dut.control_pclock, 2)
   dut.control_presetn.value = 1
   dut.data_aresetn.value = 1
-  await ClockCycles(dut.control_pclock, 2)
-
-  # Wait
   await ClockCycles(dut.control_pclock, 10)
 
 
@@ -44,7 +43,7 @@ async def single_read_write_read_test(dut:SimHandleBase):
   await apb_master.busy_send(apb.APBTransaction(address = csr__transaction_attributes__address,    data = 0x0            )) # Read transaction
 
   # Wait
-  await ClockCycles(dut.control_pclock, 10)
+  await ClockCycles(dut.control_pclock, 5)
 
   # Start
   await apb_master.busy_send(apb.APBTransaction(address = csr__control__address, data = 0x1)) # Start
@@ -58,11 +57,10 @@ async def single_read_write_read_test(dut:SimHandleBase):
       break
     pooling_iterations -= 1
 
+
+
   # Reset
   await apb_master.busy_send(apb.APBTransaction(address = csr__control__address, data = 0x0)) # Reset
-
-  # Wait
-  await ClockCycles(dut.control_pclock, 10)
 
 
 
@@ -74,12 +72,11 @@ async def single_read_write_read_test(dut:SimHandleBase):
   await apb_master.busy_send(apb.APBTransaction(address = csr__data_initial_value_0__address,      data = 0xDEADBEEF     )) # Initial random data seed
   await apb_master.busy_send(apb.APBTransaction(address = csr__transaction_attributes__address,    data = 0x1            )) # Write transaction
 
+  # Wait
   await ClockCycles(dut.control_pclock, 5)
 
   # Start
   await apb_master.busy_send(apb.APBTransaction(address = csr__control__address, data = 0x1)) # Start
-
-  await ClockCycles(dut.control_pclock, 5)
 
   # Wait until injection is done
   pooling_iterations = 100
@@ -89,6 +86,8 @@ async def single_read_write_read_test(dut:SimHandleBase):
     if ((transaction.data & 0b11) == 0b11):
       break
     pooling_iterations -= 1
+
+
 
   # Reset
   await apb_master.busy_send(apb.APBTransaction(address = csr__control__address, data = 0x0)) # Reset
@@ -103,7 +102,7 @@ async def single_read_write_read_test(dut:SimHandleBase):
   await apb_master.busy_send(apb.APBTransaction(address = csr__transaction_attributes__address,    data = 0x0            )) # Read transaction
 
   # Wait
-  await ClockCycles(dut.control_pclock, 10)
+  await ClockCycles(dut.control_pclock, 5)
 
   # Start
   await apb_master.busy_send(apb.APBTransaction(address = csr__control__address, data = 0x1)) # Start
@@ -116,6 +115,8 @@ async def single_read_write_read_test(dut:SimHandleBase):
     if ((transaction.data & 0b11) == 0b11):
       break
     pooling_iterations -= 1
+
+
 
   # Reset
   await apb_master.busy_send(apb.APBTransaction(address = csr__control__address, data = 0x0)) # Reset
