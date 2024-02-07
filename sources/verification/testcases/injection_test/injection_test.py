@@ -7,11 +7,7 @@ from cocotb.triggers import ClockCycles
 import cocotbext.apb as apb
 import cocotbext.axi as axi
 
-{%- filter align %}
-{% for register in registers %}
-csr__{{register.name}}__address § = 0x{{register.offset|hexadecimal}}
-{%- endfor %}
-{%- endfilter %}
+from verification.software.axi_injector import *
 
 @cocotb.test()
 async def injection_test(dut:SimHandleBase):
