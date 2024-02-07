@@ -93,7 +93,8 @@ export VERIFICATION_DESIGN_FILES
 
 
 
-# TESTCASE ?= base_test
+export PYTHONPATH := $(GENERATED_DIR):$(PYTHONPATH)
+
 
 
 
@@ -183,7 +184,7 @@ report:
 .PHONY: waves
 waves:
 ifdef TESTCASE
-	$(WAVE_TOOL) $(WAVES_DIR)/$(TESTCASE).gtkw $(WAVES_ARGS)
+	$(WAVE_TOOL) $(WAVES_DIR)/$(TESTCASE).gtkw $(WAVES_ARGS) &
 else
 	@echo "ERROR: Please specify the testcase with the variable TESTCASE."
 endif
