@@ -59,14 +59,17 @@ class InjectionTransactionBurst(IntEnum):
 class InjectionTransactionProtectionPriviledge(IntEnum):
   UNPRIVILEDGED = 0x0
   PRIVILEDGED   = 0x1
+  DEFAULT       = UNPRIVILEDGED
 
 class InjectionTransactionProtectionSecurity(IntEnum):
   SECURE     = 0x0
   NON_SECURE = 0x1
+  DEFAULT    = NON_SECURE
 
 class InjectionTransactionProtectionAccessType(IntEnum):
   DATA        = 0x0
   INSTRUCTION = 0x1
+  DEFAULT     = DATA
 
 class AXIInjector_TestBench:
   class AXIInjector_Registers:
@@ -150,16 +153,16 @@ class AXIInjector_TestBench:
                                 transaction_protection_access_type : InjectionTransactionProtectionAccessType = None,
                                 transaction_quality_of_service     : int                                      = None,
                                 ) -> None:
-    self.injection_mode.modify_field("address_generation_mode", address_generation_mode)
-    self.injection_mode.modify_field("data_generation_mode", data_generation_mode)
-    self.injection_mode.modify_field("stop_condition", stop_condition)
-    await self.injection_mode.update()
+    self.registers.injection_mode.modify_field("address_generation_mode", address_generation_mode)
+    self.registers.injection_mode.modify_field("data_generation_mode", data_generation_mode)
+    self.registers.injection_mode.modify_field("stop_condition", stop_condition)
+    await self.registers.injection_mode.update()
 
-    self.data_shift_mode.modify_field("enable", data_shift_enable)
-    self.data_shift_mode.modify_field("direction", data_shift_direction)
-    await self.data_shift_mode.update()
+    self.registers.data_shift_mode.modify_field("enable", data_shift_enable)
+    self.registers.data_shift_mode.modify_field("direction", data_shift_direction)
+    await self.registers.data_shift_mode.update()
 
-    await self.data_final_mask.write(data_final_mask)
+    await self.registers.data_final_mask.write(data_final_mask)
 
     {% for register_48b in (
       "address_range_start",
@@ -174,26 +177,31 @@ class AXIInjector_TestBench:
     ) %}
     if {{register_48b}} != None:
       {{register_48b}}_values = padd_array(break_to_words({{register_48b}}, word_size=32), padding_length=2, padding_value=0)
-      await self.{{register_48b}}_0.write({{register_48b}}_values[0])
-      await self.{{register_48b}}_1.write({{register_48b}}_values[1])
+      await self.registers.{{register_48b}}_0.write({{register_48b}}_values[0])
+      await self.registers.{{register_48b}}_1.write({{register_48b}}_values[1])
     {% endfor %}
 
-    data_initial_value_values = padd_array(break_to_words(data_initial_value, word_size=32), padding_length=8, padding_value=0)
-    await self.data_initial_value_0.write(data_initial_value_values[0])
-    await self.data_initial_value_1.write(data_initial_value_values[1])
-    await self.data_initial_value_2.write(data_initial_value_values[2])
-    await self.data_initial_value_3.write(data_initial_value_values[3])
-    await self.data_initial_value_4.write(data_initial_value_values[4])
-    await self.data_initial_value_5.write(data_initial_value_values[5])
-    await self.data_initial_value_6.write(data_initial_value_values[6])
-    await self.data_initial_value_7.write(data_initial_value_values[7])
+    if data_initial_value != None:
+      data_initial_value_values = padd_array(break_to_words(data_initial_value, word_size=32), padding_length=8, padding_value=0)
+      await self.registers.data_initial_value_0.write(data_initial_value_values[0])
+      await self.registers.data_initial_value_1.write(data_initial_value_values[1])
+      await self.registers.data_initial_value_2.write(data_initial_value_values[2])
+      await self.registers.data_initial_value_3.write(data_initial_value_values[3])
+      await self.registers.data_initial_value_4.write(data_initial_value_values[4])
+      await self.registers.data_initial_value_5.write(data_initial_value_values[5])
+      await self.registers.data_initial_value_6.write(data_initial_value_values[6])
+      await self.registers.data_initial_value_7.write(data_initial_value_values[7])
 
-    self.transaction_attributes.modify_field("direction",          transaction_direction)
-    self.transaction_attributes.modify_field("length",             transaction_length)
-    self.transaction_attributes.modify_field("size",               transaction_size)
-    self.transaction_attributes.modify_field("burst",              transaction_burst)
-    self.transaction_attributes.modify_field("quality_of_service", transaction_quality_of_service)
-    self.transaction_attributes.modify_field("protection",         transaction_protection_priviledge
-                                                                 & transaction_protection_security << 1
-                                                                 & transaction_protection_access_type << 2)
-    await self.transaction_attributes.update()
+    self.registers.transaction_attributes.modify_field("direction",          transaction_direction)
+    self.registers.transaction_attributes.modify_field("length",             transaction_length)
+    self.registers.transaction_attributes.modify_field("size",               transaction_size)
+    self.registers.transaction_attributes.modify_field("burst",              transaction_burst)
+    self.registers.transaction_attributes.modify_field("quality_of_service", transaction_quality_of_service)
+    if transaction_protection_priviledge != None or transaction_protection_security != None or transaction_protection_access_type != None:
+      transaction_protection_priviledge  = transaction_protection_priviledge  if transaction_protection_priviledge  != None else InjectionTransactionProtectionPriviledge.DEFAULT
+      transaction_protection_security    = transaction_protection_security    if transaction_protection_security    != None else InjectionTransactionProtectionSecurity.DEFAULT
+      transaction_protection_access_type = transaction_protection_access_type if transaction_protection_access_type != None else InjectionTransactionProtectionAccessType.DEFAULT
+      self.registers.transaction_attributes.modify_field("protection",       transaction_protection_priviledge
+                                                                           & transaction_protection_security << 1
+                                                                           & transaction_protection_access_type << 2)
+    await self.registers.transaction_attributes.update()
