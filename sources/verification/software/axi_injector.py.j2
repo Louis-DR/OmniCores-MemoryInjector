@@ -1,6 +1,115 @@
+from enum import Enum
+
+import cocotb
+from cocotb.clock import Clock
+from cocotb.handle import SimHandleBase
+from cocotb.triggers import ClockCycles
+
+import cocotbext.apb as apb
+import cocotbext.axi as axi
+
+from verification.software.cocotb_utils import APBRegister, APBRegisterField
+from verification.software.utils import break_to_words, padd_array
 
 {%- filter align %}
 {% for register in registers %}
 csr__{{register.name}}__address § = 0x{{register.offset|hexadecimal}}
 {%- endfor %}
 {%- endfilter %}
+
+class InjectionAddressGenerationMode(Enum):
+  RANGE  = 0x0
+  RANDOM = 0x1
+
+class InjectionDataGenerationMode(Enum):
+  SHIFT  = 0x0
+  RANDOM = 0x1
+
+class InjectionStopCondition(Enum):
+  ADDRESS_RANGE       = 0x0
+  NUMBER_TRANSACTIONS = 0x1
+
+class InjectionDataShiftEnable(Enum):
+  DISABLE = 0x0
+  ENABLE  = 0x1
+
+class InjectionDataShiftDirection(Enum):
+  LEFT  = 0x0
+  RIFTH = 0x1
+
+class InjectionTransactionDirection(Enum):
+  READ  = 0x0
+  WRITE = 0x1
+
+class InjectionTransactionBurst(Enum):
+  FIXED = 0x0
+  INCR  = 0x1
+  WRAP  = 0x2
+
+class InjectionTransactionProtectionPriviledge(Enum):
+  UNPRIVILEDGED = 0x0
+  PRIVILEDGED   = 0x1
+
+class InjectionTransactionProtectionSecurity(Enum):
+  SECURE     = 0x0
+  NON_SECURE = 0x1
+
+class InjectionTransactionProtectionAccessType(Enum):
+  DATA        = 0x0
+  INSTRUCTION = 0x1
+
+class AXIInjector_TestBench:
+  class AXIInjector_Registers:
+    def __init__(self, apb_master:apb.APBMasterDriver):
+      self.apb_master = apb_master
+
+      {%- filter align %}
+      {% for register in registers %}
+      self.{{register.name}} § = APBRegister(self.apb_master, 0x{{register.offset|hexadecimal}})
+      {%- if register.fields is defined %} {% for field in register.fields %}
+      self.{{register.name}} § .add_field("{{field.name}}", § APBRegisterField(offset={{field.offset}}, § width={{field.width}}))
+      {%- endfor -%} {% endif -%}
+      {%- endfor %}
+      {%- endfilter %}
+
+  def __init__(self, dut:SimHandleBase):
+    self.dut = dut
+
+    self.registers = None
+
+    self.apb_master = None
+    self.axi_ram    = None
+
+    self.control_clock_period = 10
+    self.data_clock_period    = 1
+
+    self.axi_ram_size = 2**48
+
+  def instanciate_peripherals(self) -> None:
+    self.apb_master = apb.APBMasterDriver(self.dut, "control", self.dut.control_pclock, uppercase=False)
+    self.axi_ram    = axi.AxiRam(bus                = axi.AxiBus.from_prefix(self.dut, "data"),
+                                 clock              = self.dut.data_aclock,
+                                 reset              = self.dut.data_aresetn,
+                                 size               = self.axi_ram_size,
+                                 reset_active_level = False)
+
+  def start_clocks(self) -> None:
+    cocotb.start_soon(Clock(self.dut.control_pclock, self.control_clock_period, units="ns").start())
+    cocotb.start_soon(Clock(self.dut.data_aclock,    self.data_clock_period,    units="ns").start())
+
+  async def reset_device(self) -> None:
+    self.dut.control_presetn.value = 0
+    self.dut.data_aresetn.value = 0
+    await ClockCycles(self.dut.control_pclock, 5)
+    self.dut.control_presetn.value = 1
+    self.dut.data_aresetn.value = 1
+    await ClockCycles(self.dut.control_pclock, 5)
+
+  def create_registers(self) -> None:
+    self.registers = self.AXIInjector_Registers(self.apb_master)
+
+  async def initialize_testbench(self) -> None:
+    self.instanciate_peripherals()
+    self.start_clocks()
+    await self.reset_device()
+    self.create_registers()
