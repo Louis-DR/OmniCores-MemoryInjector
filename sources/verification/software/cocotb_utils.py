@@ -47,11 +47,13 @@ class APBRegister:
     self.dirty = False
 
   def modify(self, value:int) -> None:
+    if value == None: return
     if value != self.value:
       self.value = value
       self.dirty = True
 
   def modify_field(self, field_name:str, value:int) -> None:
+    if value == None: return
     field_descriptor = self.fields[field_name]
     value = clamp(value, 0, 2 ** field_descriptor.width)
     value_old = self.value

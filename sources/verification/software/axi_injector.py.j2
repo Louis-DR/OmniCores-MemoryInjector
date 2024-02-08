@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import IntEnum
 
 import cocotb
 from cocotb.clock import Clock
@@ -17,44 +17,54 @@ csr__{{register.name}}__address § = 0x{{register.offset|hexadecimal}}
 {%- endfor %}
 {%- endfilter %}
 
-class InjectionAddressGenerationMode(Enum):
+class InjectionAddressGenerationMode(IntEnum):
   RANGE  = 0x0
   RANDOM = 0x1
 
-class InjectionDataGenerationMode(Enum):
+class InjectionDataGenerationMode(IntEnum):
   SHIFT  = 0x0
   RANDOM = 0x1
 
-class InjectionStopCondition(Enum):
+class InjectionStopCondition(IntEnum):
   ADDRESS_RANGE       = 0x0
   NUMBER_TRANSACTIONS = 0x1
 
-class InjectionDataShiftEnable(Enum):
+class InjectionDataShiftEnable(IntEnum):
   DISABLE = 0x0
   ENABLE  = 0x1
 
-class InjectionDataShiftDirection(Enum):
+class InjectionDataShiftDirection(IntEnum):
   LEFT  = 0x0
   RIFTH = 0x1
 
-class InjectionTransactionDirection(Enum):
+class InjectionTransactionDirection(IntEnum):
   READ  = 0x0
   WRITE = 0x1
 
-class InjectionTransactionBurst(Enum):
+class InjectionTransactionSize(IntEnum):
+  _1B   = 0x0
+  _2B   = 0x1
+  _4B   = 0x2
+  _8B   = 0x3
+  _16B  = 0x4
+  _32B  = 0x5
+  _64B  = 0x6
+  _128B = 0x7
+
+class InjectionTransactionBurst(IntEnum):
   FIXED = 0x0
   INCR  = 0x1
   WRAP  = 0x2
 
-class InjectionTransactionProtectionPriviledge(Enum):
+class InjectionTransactionProtectionPriviledge(IntEnum):
   UNPRIVILEDGED = 0x0
   PRIVILEDGED   = 0x1
 
-class InjectionTransactionProtectionSecurity(Enum):
+class InjectionTransactionProtectionSecurity(IntEnum):
   SECURE     = 0x0
   NON_SECURE = 0x1
 
-class InjectionTransactionProtectionAccessType(Enum):
+class InjectionTransactionProtectionAccessType(IntEnum):
   DATA        = 0x0
   INSTRUCTION = 0x1
 
@@ -113,3 +123,77 @@ class AXIInjector_TestBench:
     self.start_clocks()
     await self.reset_device()
     self.create_registers()
+
+  async def configure_injection(self,
+                                address_generation_mode            : InjectionAddressGenerationMode           = None,
+                                address_range_start                : int                                      = None,
+                                address_range_stop                 : int                                      = None,
+                                address_range_increment            : int                                      = None,
+                                address_random_lfsr_seed           : int                                      = None,
+                                address_random_lfsr_fibonacci_taps : int                                      = None,
+                                address_random_lfsr_gallois_taps   : int                                      = None,
+                                address_random_lfsr_mask           : int                                      = None,
+                                address_final_mask                 : int                                      = None,
+                                data_generation_mode               : InjectionDataGenerationMode              = None,
+                                data_initial_value                 : int                                      = None,
+                                data_shift_enable                  : InjectionDataShiftEnable                 = None,
+                                data_shift_direction               : InjectionDataShiftDirection              = None,
+                                data_final_mask                    : int                                      = None,
+                                stop_condition                     : InjectionStopCondition                   = None,
+                                number_transactions                : int                                      = None,
+                                transaction_direction              : InjectionTransactionDirection            = None,
+                                transaction_length                 : int                                      = None,
+                                transaction_size                   : InjectionTransactionSize                 = None,
+                                transaction_burst                  : InjectionTransactionBurst                = None,
+                                transaction_protection_priviledge  : InjectionTransactionProtectionPriviledge = None,
+                                transaction_protection_security    : InjectionTransactionProtectionSecurity   = None,
+                                transaction_protection_access_type : InjectionTransactionProtectionAccessType = None,
+                                transaction_quality_of_service     : int                                      = None,
+                                ) -> None:
+    self.injection_mode.modify_field("address_generation_mode", address_generation_mode)
+    self.injection_mode.modify_field("data_generation_mode", data_generation_mode)
+    self.injection_mode.modify_field("stop_condition", stop_condition)
+    await self.injection_mode.update()
+
+    self.data_shift_mode.modify_field("enable", data_shift_enable)
+    self.data_shift_mode.modify_field("direction", data_shift_direction)
+    await self.data_shift_mode.update()
+
+    await self.data_final_mask.write(data_final_mask)
+
+    {% for register_48b in (
+      "address_range_start",
+      "address_range_stop",
+      "address_range_increment",
+      "address_random_lfsr_seed",
+      "address_random_lfsr_fibonacci_taps",
+      "address_random_lfsr_gallois_taps",
+      "address_random_lfsr_mask",
+      "address_final_mask",
+      "number_transactions"
+    ) %}
+    if {{register_48b}} != None:
+      {{register_48b}}_values = padd_array(break_to_words({{register_48b}}, word_size=32), padding_length=2, padding_value=0)
+      await self.{{register_48b}}_0.write({{register_48b}}_values[0])
+      await self.{{register_48b}}_1.write({{register_48b}}_values[1])
+    {% endfor %}
+
+    data_initial_value_values = padd_array(break_to_words(data_initial_value, word_size=32), padding_length=8, padding_value=0)
+    await self.data_initial_value_0.write(data_initial_value_values[0])
+    await self.data_initial_value_1.write(data_initial_value_values[1])
+    await self.data_initial_value_2.write(data_initial_value_values[2])
+    await self.data_initial_value_3.write(data_initial_value_values[3])
+    await self.data_initial_value_4.write(data_initial_value_values[4])
+    await self.data_initial_value_5.write(data_initial_value_values[5])
+    await self.data_initial_value_6.write(data_initial_value_values[6])
+    await self.data_initial_value_7.write(data_initial_value_values[7])
+
+    self.transaction_attributes.modify_field("direction",          transaction_direction)
+    self.transaction_attributes.modify_field("length",             transaction_length)
+    self.transaction_attributes.modify_field("size",               transaction_size)
+    self.transaction_attributes.modify_field("burst",              transaction_burst)
+    self.transaction_attributes.modify_field("quality_of_service", transaction_quality_of_service)
+    self.transaction_attributes.modify_field("protection",         transaction_protection_priviledge
+                                                                 & transaction_protection_security << 1
+                                                                 & transaction_protection_access_type << 2)
+    await self.transaction_attributes.update()
