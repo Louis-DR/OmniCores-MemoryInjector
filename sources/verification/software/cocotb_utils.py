@@ -9,11 +9,11 @@ class APBRegisterField:
     self.width  = width
 
 class APBRegister:
-  def __init__(self, apb_master:apb.APBMasterDriver, address:int, value:int=None, fields:dict[str,APBRegisterField]=None):
+  def __init__(self, apb_master:apb.APBMasterDriver, address:int, value:int=0x0, fields:dict[str,APBRegisterField]=None):
     self.apb_master = apb_master
     self.address    = address
     self.value      = value
-    self.dirty      = False
+    self.dirty      = True
     self.fields     = fields
 
   def add_field(self, field_name:str, field_descriptor:APBRegisterField) -> None:
