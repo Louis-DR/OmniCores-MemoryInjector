@@ -620,16 +620,21 @@ assign collector__is_finished = ~collector__is_waiting;
 
 */
 
-logic [31:0] timestamp__counter;
-logic [31:0] timestamp__counter_next;
-
 logic timestamp__enable;
 assign timestamp__enable = generator__is_active & collector__is_finished;
 
-assign timestamp__counter_next = timestamp__enable ? timestamp__counter += 1 : timestamp__counter;
+logic timestamp__do_reset;
+assign timestamp__do_reset = generator__do_reset;
+
+logic [31:0] timestamp__counter;
+logic [31:0] timestamp__counter_next;
+
+assign timestamp__counter_next = timestamp__enable ? timestamp__counter + 1 : timestamp__counter;
 
 always_ff @(posedge data_aclock or negedge data_aresetn) begin
   if (!data_aresetn) begin
+    timestamp__counter <= 32'd0;
+  end else if (timestamp__do_reset) begin
     timestamp__counter <= 32'd0;
   end else begin
     timestamp__counter <= timestamp__counter_next;
@@ -639,8 +644,8 @@ end
 assign csr__timestamp_start__hw_write_data  = timestamp__counter;
 assign csr__timestamp_finish__hw_write_data = timestamp__counter;
 
-csr__timestamp_start__hw_write_enable  =  control__is_idle;
-csr__timestamp_finish__hw_write_enable = ~control__is_waiting_outstanding;
+assign csr__timestamp_start__hw_write_enable  =  control__is_idle;
+assign csr__timestamp_finish__hw_write_enable = ~control__is_waiting_outstanding;
 
 
 
