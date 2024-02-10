@@ -1,10 +1,6 @@
 
 import cocotb
-from cocotb.clock import Clock
 from cocotb.handle import SimHandleBase
-from cocotb.triggers import ClockCycles
-
-import cocotbext.apb as apb
 
 from verification.software.axi_injector import *
 
@@ -70,8 +66,8 @@ async def single_read_write_read_test(dut:SimHandleBase):
 
 
 
+  await injector.wait_reception_finish(max_wait=100)
+
+
+
   await injector.reset_injection()
-
-
-
-  await ClockCycles(dut.control_pclock, 100)

@@ -1,18 +1,18 @@
 [*]
 [*] GTKWave Analyzer v3.3.107 (w)1999-2020 BSI
-[*] Tue Feb  6 22:26:32 2024
+[*] Sat Feb 10 20:47:56 2024
 [*]
 [dumpfile] "/Users/louis/Library/CloudStorage/Dropbox/Projets/InjectorAXI/generated/verification/testcases/single_read_write_read_test/waveform.vcd"
-[dumpfile_mtime] "Tue Feb  6 22:25:23 2024"
-[dumpfile_size] 415702
+[dumpfile_mtime] "Sat Feb 10 20:46:06 2024"
+[dumpfile_size] 76441
 [savefile] "/Users/louis/Library/CloudStorage/Dropbox/Projets/InjectorAXI/make/waves/single_read_write_read_test.gtkw"
-[timestart] 341510
+[timestart] 0
 [size] 1728 1051
 [pos] -1 -1
-*-13.192584 355000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-18.960827 320000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] axi_injector_tb.
 [treeopen] axi_injector_tb.axi_injector.
-[sst_width] 294
+[sst_width] 398
 [signals_width] 601
 [sst_expanded] 1
 [sst_vpaned_height] 303
@@ -21,6 +21,9 @@
 @28
 axi_injector_tb.axi_injector.control_pclock
 axi_injector_tb.control_presetn
+@200
+-
+@28
 axi_injector_tb.control_psel
 axi_injector_tb.control_penable
 axi_injector_tb.control_pready
@@ -97,7 +100,7 @@ axi_injector_tb.axi_injector.injector__status_fsm_next
 @22
 axi_injector_tb.axi_injector.injector__injected_transaction_counter[23:0]
 axi_injector_tb.axi_injector.injector__injected_transaction_counter_next[23:0]
-@200
+@201
 -
 @22
 axi_injector_tb.axi_injector.injector__write_burst_counter[8:0]
@@ -111,8 +114,17 @@ axi_injector_tb.axi_injector.collector__is_finished
 -
 @22
 axi_injector_tb.axi_injector.collector__outstanding_transaction_counter[24:0]
-@23
 axi_injector_tb.axi_injector.collector__outstanding_transaction_counter_next[24:0]
+@200
+-
+@28
+axi_injector_tb.axi_injector.timestamp__do_reset
+axi_injector_tb.axi_injector.timestamp__enable
+@22
+axi_injector_tb.axi_injector.timestamp__counter[31:0]
+axi_injector_tb.axi_injector.timestamp__counter_next[31:0]
+axi_injector_tb.axi_injector.csr__timestamp_start[31:0]
+axi_injector_tb.axi_injector.csr__timestamp_finish[31:0]
 @1000200
 -STATE
 @800200

@@ -214,12 +214,19 @@ class AXIInjector_TestBench:
   async def start_injection(self) -> None:
     await self.registers.control.write(0x1)
 
-  async def wait_injection_finish(self, max_wait=100):
-    max_wait = 100
+  async def wait_injection_finish(self, max_wait=10000):
     while max_wait != 0:
       await self.registers.status.read()
       injection_status = self.registers.status.shadow_read_field("injection")
       if injection_status == 0x3:
+        break
+      max_wait -= 1
+
+  async def wait_reception_finish(self, max_wait=10000):
+    while max_wait != 0:
+      await self.registers.status.read()
+      injection_status = self.registers.status.shadow_read_field("reception")
+      if injection_status == 0x0:
         break
       max_wait -= 1
 
