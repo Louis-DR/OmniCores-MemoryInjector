@@ -1,7 +1,7 @@
 
 import cocotbext.apb as apb
 
-from verification.software.utils import clamp
+from verification.software.utils import clamp, write_field
 
 class APBRegisterField:
   def __init__(self, offset, width):
@@ -57,7 +57,7 @@ class APBRegister:
     field_descriptor = self.fields[field_name]
     value = clamp(value, 0, 2 ** field_descriptor.width)
     value_old = self.value
-    self.value &= value << field_descriptor.offset
+    self.value = write_field(self.value, field_descriptor.offset, field_descriptor.width, value)
     if self.value != value_old:
       self.dirty = True
 
