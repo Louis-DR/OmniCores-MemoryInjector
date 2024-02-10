@@ -14,6 +14,11 @@ def clamp(value, lower_bound, upper_bound):
 def bitmask(offset, width):
   return ((1 << width) - 1) << offset
 
+def read_field(register, offset, width):
+  register >>= offset
+  register &= bitmask(0, width)
+  return register
+
 def write_field(register, offset, width, value):
   register &= ~bitmask(offset, width)
   register |= value << offset

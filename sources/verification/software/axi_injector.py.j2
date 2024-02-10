@@ -207,3 +207,21 @@ class AXIInjector_TestBench:
                                                                            & transaction_protection_security << 1
                                                                            & transaction_protection_access_type << 2)
     await self.registers.transaction_attributes.update()
+
+  async def wait_signal_propagation(self) -> None:
+    await ClockCycles(self.dut.control_pclock, 5)
+
+  async def start_injection(self) -> None:
+    await self.registers.control.write(0x1)
+
+  async def wait_injection_finish(self, max_wait=100):
+    max_wait = 100
+    while max_wait != 0:
+      await self.registers.status.read()
+      injection_status = self.registers.status.shadow_read_field("injection")
+      if injection_status == 0x3:
+        break
+      max_wait -= 1
+
+  async def reset_injection(self) -> None:
+    await self.registers.control.write(0x0)

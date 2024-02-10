@@ -1,7 +1,7 @@
 
 import cocotbext.apb as apb
 
-from verification.software.utils import clamp, write_field
+from verification.software.utils import clamp, read_field, write_field
 
 class APBRegisterField:
   def __init__(self, offset, width):
@@ -68,3 +68,10 @@ class APBRegister:
   def non_blocking_update(self) -> None:
     if self.dirty:
       self.non_blocking_write(self.value)
+
+  def shadow_read(self) -> int:
+    return self.value
+
+  def shadow_read_field(self, field_name:str) -> int:
+    field_descriptor = self.fields[field_name]
+    return read_field(self.value, field_descriptor.offset, field_descriptor.width) if self.value != None else None
