@@ -579,10 +579,10 @@ logic [24:0] collector__outstanding_transaction_counter_next;
 // Update the counter with the AXI handshake
 always_comb begin
   collector__outstanding_transaction_counter_next = collector__outstanding_transaction_counter;
-  if (data_awvalid & data_awready) collector__outstanding_transaction_counter_next ++;
-  if (data_arvalid & data_arready) collector__outstanding_transaction_counter_next ++;
-  if (data_bvalid  & data_bready ) collector__outstanding_transaction_counter_next --;
-  if (data_rvalid  & data_rready ) collector__outstanding_transaction_counter_next --;
+  if (data_awvalid & data_awready            ) collector__outstanding_transaction_counter_next ++;
+  if (data_arvalid & data_arready            ) collector__outstanding_transaction_counter_next ++;
+  if (data_bvalid  & data_bready             ) collector__outstanding_transaction_counter_next --;
+  if (data_rvalid  & data_rready & data_rlast) collector__outstanding_transaction_counter_next --;
 end
 
 // Overflow or underflow
