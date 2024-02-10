@@ -108,6 +108,18 @@ registers:
         - name: waiting_outstanding
           value: 0x1
 
+- name: timestamp_start
+  width: 32
+  sw_access: read-only
+  hw_access: read-write
+  reset: 0x0
+
+- name: timestamp_finish
+  width: 32
+  sw_access: read-only
+  hw_access: read-write
+  reset: 0x0
+
 
 
 - name: injection_mode
