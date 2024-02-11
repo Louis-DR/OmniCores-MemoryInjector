@@ -1,0 +1,28 @@
+#include <stdint.h>
+
+#define __BITFIELD_ATTRIBUTES__ __attribute__((packed, aligned(4)))
+
+{% for register in registers %}
+{% if register.fields is defined %}
+typedef struct axi_injector__{{register.name}}__fields {
+  {%- filter align -%} {%- for field in register.fields %}
+  uint32_t {{field.name}} § : § {{field.width}}; §§
+  {%- endfor %} {% endfilter %}
+} axi_injector__{{register.name}}__fields;
+
+typedef union axi_injector__{{register.name}}__register {
+  {%- filter align %}
+  uint32_t                                § raw_value;
+  axi_injector__{{register.name}}__fields § fields;
+  {%- endfilter %}
+} axi_injector__{{register.name}}__register;
+{% else %}
+typedef uint32_t axi_injector__{{register.name}}__register;
+{% endif %}
+{% endfor %}
+
+typedef struct axi_injector {
+{%- filter align %} {%- for register in registers %}
+  axi_injector__{{register.name}}__register § axi_injector__{{register.name}};
+{%- endfor %} {%- endfilter %}
+} axi_injector;
