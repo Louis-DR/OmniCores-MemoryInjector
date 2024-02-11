@@ -50,15 +50,13 @@ always_ff @(posedge {{clock_signal}} or negedge {{reset_signal}}) begin
       32'h{{(base_address + register.offset) | hexadecimal}} § : {{register_prefix}}{{register.name}}{{register_suffix}} § <= {{apb_prefix}}{{apb_separator}}pwdata § [{{register.width-1}}:0];§§
       {%- endif %} {%- endfor %} {%- endfilter %}
     endcase
-  end else begin
-    // Hardware write
-    case ({{apb_prefix}}{{apb_separator}}paddr)
-      {%- filter align -%} {%- for register in registers %} {%- if register.hw_access in ("read-write", "write-only") %}
-      32'h{{(base_address + register.offset) | hexadecimal}} § : begin § if § ({{hw_write_prefix}}{{register.name}}{{hw_write_suffix}}_enable) § {{register_prefix}}{{register.name}}{{register_suffix}} § §§ <= {{hw_write_prefix}}{{register.name}}{{hw_write_suffix}}_data;
-                       {%- if register.fields is defined %} {{"\n"}} § § else begin {%- for field in register.fields %} if §§ ({{hw_write_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{hw_write_suffix}}_enable) § {{register_prefix}}{{register.name}}{{register_suffix}} § [{{field.offset+field.width-1}}:{{field.offset}}] §§ <= {{hw_write_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{hw_write_suffix}}_data; {{ "\n § §" if not loop.last else "end" }} {%- endfor -%} {%- endif %} end
-      {%- endif %} {%- endfor %} {%- endfilter %}
-    endcase
   end
+  // Hardware write
+  {%- filter align -%} {%- for register in registers %} {%- if register.hw_access in ("read-write", "write-only") %}
+  if § ({{hw_write_prefix}}{{register.name}}{{hw_write_suffix}}_enable) § {{register_prefix}}{{register.name}}{{register_suffix}} § <= {{hw_write_prefix}}{{register.name}}{{hw_write_suffix}}_data;
+  {%- if register.fields is defined %} {{"\n"}}  else begin
+  {%- for field in register.fields %} if §§ ({{hw_write_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{hw_write_suffix}}_enable) § {{register_prefix}}{{register.name}}{{register_suffix}} [{{field.offset+field.width-1}}:{{field.offset}}] § <= {{hw_write_prefix}}{{register.name}}{{field_separator}}{{field.name}}{{hw_write_suffix}}_data; {{ "\n" if not loop.last else "end" }} {%- endfor -%} {%- endif %}
+  {%- endif %} {%- endfor %} {%- endfilter %}
 end
 
 // Register read
