@@ -181,6 +181,15 @@ sync generator__do_pause__synchronizer (
   .data_out ( generator__do_pause )
 );
 
+logic generator__do_start_pulse;
+
+rising_edge_detector generator__do_start__edge_detector (
+  .clock       ( data_aclock               ),
+  .resetn      ( data_aresetn              ),
+  .signal      ( generator__do_start       ),
+  .rising_edge ( generator__do_start_pulse )
+);
+
 // Status feedback
 logic generator__is_idle;
 logic generator__is_active;
@@ -603,6 +612,15 @@ end
 assign collector__is_waiting  = collector__outstanding_transaction_counter != 24'd0;
 assign collector__is_finished = ~collector__is_waiting;
 
+// Finish status pulse
+logic collector__is_finished_pulse;
+rising_edge_detector collector__is_finished__edge_detector (
+  .clock       ( data_aclock               ),
+  .resetn      ( data_aresetn              ),
+  .signal      ( collector__is_finished       ),
+  .rising_edge ( collector__is_finished_pulse )
+);
+
 
 
 
@@ -620,8 +638,8 @@ assign collector__is_finished = ~collector__is_waiting;
 
 */
 
-logic timestamp__enable;
-assign timestamp__enable = generator__is_active & collector__is_finished;
+logic timestamp__count_enable;
+assign timestamp__count_enable = generator__is_active | collector__is_waiting;
 
 logic timestamp__do_reset;
 assign timestamp__do_reset = generator__do_reset;
@@ -629,23 +647,46 @@ assign timestamp__do_reset = generator__do_reset;
 logic [31:0] timestamp__counter;
 logic [31:0] timestamp__counter_next;
 
-assign timestamp__counter_next = timestamp__enable ? timestamp__counter + 1 : timestamp__counter;
+logic [31:0] timestamp__injection_start;
+logic [31:0] timestamp__injection_start_next;
 
-always_ff @(posedge data_aclock or negedge data_aresetn) begin
-  if (!data_aresetn) begin
-    timestamp__counter <= 32'd0;
-  end else if (timestamp__do_reset) begin
-    timestamp__counter <= 32'd0;
+logic [31:0] timestamp__collection_finish;
+logic [31:0] timestamp__collection_finish_next;
+
+always_comb begin
+  if (timestamp__count_enable) begin
+    timestamp__counter_next = timestamp__counter + 1;
   end else begin
-    timestamp__counter <= timestamp__counter_next;
+    timestamp__counter_next = timestamp__counter;
   end
 end
 
-assign csr__timestamp_start__hw_write_data  = timestamp__counter;
-assign csr__timestamp_finish__hw_write_data = timestamp__counter;
+always_ff @(posedge data_aclock or negedge data_aresetn) begin
+  if (!data_aresetn | timestamp__do_reset) begin
+    timestamp__counter           <= 32'd0;
+    timestamp__injection_start   <= 32'd0;
+    timestamp__collection_finish <= 32'd0;
+  end else begin
+    timestamp__counter           <= timestamp__counter_next;
+    timestamp__injection_start   <= timestamp__injection_start_next;
+    timestamp__collection_finish <= timestamp__collection_finish_next;
+  end
+end
 
-assign csr__timestamp_start__hw_write_enable  =  control__is_idle;
-assign csr__timestamp_finish__hw_write_enable = ~control__is_waiting_outstanding;
+always_comb begin
+  if (generator__do_start_pulse) begin
+    timestamp__injection_start_next = timestamp__counter;
+  end
+  if (collector__is_finished_pulse) begin
+    timestamp__collection_finish_next = timestamp__counter;
+  end
+end
+
+assign csr__timestamp_start__hw_write_data  = timestamp__injection_start;
+assign csr__timestamp_finish__hw_write_data = timestamp__collection_finish;
+
+assign csr__timestamp_start__hw_write_enable  = 1'b1;
+assign csr__timestamp_finish__hw_write_enable = 1'b1;
 
 
 
