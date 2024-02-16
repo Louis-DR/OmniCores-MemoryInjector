@@ -24,6 +24,13 @@ export RTL_SOURCES_DIR
 export REGISTERS_SOURCES_DIR
 export VERIFICATION_SOURCES_DIR
 
+GENERATED_DIR    = $(ROOT_DIR)/generated/
+BUILD_DIR        = $(ROOT_DIR)/build/
+RESULTS_DIR      = $(ROOT_DIR)/results/
+export GENERATED_DIR
+export BUILD_DIR
+export RESULTS_DIR
+
 DESIGN_GENERATED_DIR       = $(GENERATED_DIR)/design/
 HARDWARE_GENERATED_DIR     = $(DESIGN_GENERATED_DIR)/hardware/
 RTL_GENERATED_DIR          = $(HARDWARE_GENERATED_DIR)/rtl/
@@ -34,13 +41,6 @@ export HARDWARE_GENERATED_DIR
 export RTL_GENERATED_DIR
 export REGISTERS_GENERATED_DIR
 export VERIFICATION_GENERATED_DIR
-
-GENERATED_DIR    = $(ROOT_DIR)/generated/
-BUILD_DIR        = $(ROOT_DIR)/build/
-RESULTS_DIR      = $(ROOT_DIR)/results/
-export GENERATED_DIR
-export BUILD_DIR
-export RESULTS_DIR
 
 
 
@@ -146,9 +146,9 @@ compile:
 	@echo "                                        █████                          "
 	@echo "                                       ░░░░░                           "
 	echo "compile start" >> $(TIME_LOG) ; $(DATE_CMD) >> $(TIME_LOG)
-	make -C $(TESTCASES_DIR)/$(BASETEST)/
+	make -C $(BASETEST_DIR)/
 	for TESTCASE in $(TESTCASES); do \
-		cp -R $(TESTCASES_DIR)/$(BASETEST)/sim_build/ $(TESTCASES_DIR)/$$TESTCASE/sim_build/ ; \
+		cp -R $(BASETEST_DIR)/sim_build/ $(TESTCASES_DIR)/$$TESTCASE/sim_build/ ; \
 	done
 	echo "compile end" >> $(TIME_LOG) ; $(DATE_CMD) >> $(TIME_LOG)
 
