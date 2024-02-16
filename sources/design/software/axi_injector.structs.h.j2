@@ -23,6 +23,9 @@ typedef uint32_t axi_injector__{{register.name}}__register;
 
 typedef struct axi_injector {
 {%- filter align %} {%- for register in registers %}
+{%- if register.padding_before is defined %}
+  uint32_t § : {{register.padding_before}};
+{%- endif %}
   axi_injector__{{register.name}}__register § axi_injector__{{register.name}};
 {%- endfor %} {%- endfilter %}
 } axi_injector;
